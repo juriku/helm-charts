@@ -1,0 +1,86 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "ingress.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $svcName := .Values.service.name | default $fullName -}}
+{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.class | quote }}
+    {{- if eq .Values.ingress.class "gce" }}
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ingress.allow-http: "false"
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.backend }}
+  backend:
+    serviceName: {{ .Values.ingress.backend.serviceName | default "default-http-backend" }}
+    servicePort: {{ .Values.ingress.backend.servicePort | default 80 }}
+  {{- end }}
+  tls:
+  {{- if .Values.ingress.tls }}
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- if .secretName }}
+      secretName: {{ .secretName }}
+      {{- end }}
+    {{- end }}
+  {{- else }}
+    - hosts:
+        {{- range .Values.ingress.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+      {{- if .Values.tls }}
+      {{- if .Values.tls.default }}
+      secretName: {{ .Values.tls.default }}
+      {{- end }}
+      {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- if .paths }}
+          {{- range .paths }}
+          - path: {{ .path }}
+            backend:
+              {{- if .serviceName }}
+              serviceName: {{ .serviceName | quote }}
+              {{- else }}
+              serviceName: {{ $svcName }}
+              {{- end }}
+              {{- if .servicePort }}
+              servicePort: {{ .servicePort }}
+              {{- else }}
+              servicePort: {{ $svcPort }}
+              {{- end }}
+          {{- end }}
+          {{- else }}
+          - backend:
+           {{- if .serviceName }}
+              serviceName: {{ .serviceName | quote }}
+              {{- else }}
+              serviceName: {{ $svcName }}
+              {{- end }}
+              {{- if .servicePort }}
+              servicePort: {{ .servicePort }}
+              {{- else }}
+              servicePort: {{ $svcPort }}
+              {{- end }}
+          {{- end }}
+    {{- end }}
+  {{- end }}
