@@ -1,3 +1,14 @@
+{{/*
+define container image
+*/}}
+{{- define "base.image" -}}
+image: "{{ .repository }}:{{ .tag | toString }}"
+{{- if regexMatch "[0-9]" ( .tag | toString ) }}
+imagePullPolicy: {{ .pullPolicy }}
+{{- else }}
+imagePullPolicy: "Always"
+{{- end }}
+{{- end }}
 
 {{/*
 extra pod volumes
