@@ -53,19 +53,6 @@ app: {{ include "base.fullname" . }}
 {{- end }}
 
 {{/*
-extra container volumes
-*/}}
-{{- define "base.extraVolumes" -}}
-{{- if .Values.extraContainers }}
-{{- range $containerName, $containerValues := .Values.extraContainers }}
-{{- with $containerValues.volumes }}
-{{ toYaml . }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
 service port default
 */}}
 {{- define "base.servicePortDefault" -}}
