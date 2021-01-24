@@ -29,6 +29,15 @@ entries:
     version: 0.3.3
   base:
   - apiVersion: v2
+    created: "2021-01-24T18:36:05.753041934Z"
+    description: A Helm chart for Kubernetes
+    digest: ab831ad795f2e7df0d7ac06632d73509b6a2e8e206a1c3d547c9e8a94cb2dccb
+    name: base
+    type: library
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/base-0.1.1/base-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
     created: "2021-01-24T13:57:40.46608279Z"
     description: A Helm chart for Kubernetes
     digest: ee18088dcc013eb6d1ad1ab92fe6bbc011c4f024324e93de680b9d7f93828a76
@@ -66,4 +75,23 @@ entries:
     urls:
     - https://github.com/juriku/helm-charts/releases/download/ingress-0.1.0/ingress-0.1.0.tgz
     version: 0.1.0
+  service:
+  - apiVersion: v2
+    created: "2021-01-24T18:36:05.90504983Z"
+    dependencies:
+    - name: base
+      repository: https://juriku.github.io/helm-charts
+      version: 0.1.0
+    description: A Helm chart for Kubernetes service
+    digest: 14a614141b3b72a8d06f36d77955af4c6b15f6bd3036a45e15c6cbda8098e54d
+    keywords:
+    - service
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: service
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/service-0.2.0/service-0.2.0.tgz
+    version: 0.2.0
 generated: "2020-06-29T15:34:00.004414+01:00"
