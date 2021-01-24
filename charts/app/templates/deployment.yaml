@@ -1,0 +1,288 @@
+{{- $root := . -}}
+{{- range $deploymentName, $deploymentValuesOverride := .Values.deployments }}
+{{- $deploymentValues := merge dict $deploymentValuesOverride $root -}}
+{{- if $deploymentValues.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "base.fullname" $deploymentValues }}
+  labels:
+    {{- include "base.labels" $deploymentValues | nindent 4 }}
+    {{- with $deploymentValues.Values.labelsDeployment }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $deploymentValues.Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+{{- if not $deploymentValues.Values.autoscaling.enabled }}
+  replicas: {{ $deploymentValues.Values.replicaCount }}
+  {{- with $deploymentValues.Values.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+  {{- if $deploymentValues.Values.minReadySeconds }}
+  minReadySeconds: {{ $deploymentValues.Values.minReadySeconds }}
+  {{- end }}
+  {{- if $deploymentValues.Values.progressDeadlineSeconds }}
+  progressDeadlineSeconds: {{ $deploymentValues.Values.progressDeadlineSeconds }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "base.selectorLabels" $deploymentValues | nindent 6 }}
+  template:
+    metadata:
+      {{- if or $deploymentValues.Values.prometheusScrape $deploymentValues.Values.podAnnotations }}
+      annotations:
+      {{- if $deploymentValues.Values.prometheusScrape }}
+        prometheus.io/path: {{ $deploymentValues.Values.prometheusScrapePath }}
+        prometheus.io/port: {{ $deploymentValues.Values.prometheusScrapePort }}
+        prometheus.io/scrape: "true"
+      {{- end }}
+    {{- with $deploymentValues.Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- end }}
+      labels:
+        {{- include "base.selectorLabels" $deploymentValues | nindent 8 }}
+    spec:
+      {{- if $deploymentValues.Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ $deploymentValues.Values.imagePullSecrets }}
+      {{- end }}
+      {{- with $deploymentValues.Values.podSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      containers:
+        {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
+        - name: {{ $containerName }}
+          {{- with $containerValues.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- $containerValuesImage := merge dict $containerValues.image $deploymentValues.Values.image }}
+          image: "{{ $containerValuesImage.repository }}:{{ $containerValuesImage.tag | toString }}"
+          {{- if regexMatch "[0-9]" ( $containerValuesImage.tag | toString ) }}
+          imagePullPolicy: {{ $containerValuesImage.pullPolicy }}
+          {{- else }}
+          imagePullPolicy: "Always"
+          {{- end }}
+          {{- with $containerValues.command }}
+          command:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $containerValues.args }}
+          args:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- if $containerValues.environment }}
+          env:
+          {{- range $variableName, $opts := $containerValues.environment.secretVariables }}
+            - name: {{ $variableName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $opts.secretName }}
+                  key: {{ $opts.dataKeyRef }}
+          {{- end }}
+          {{- range $variableName, $opts := $containerValues.environment.configmapVariables }}
+            - name: {{ $variableName }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $opts.configmapName }}
+                  key: {{ $opts.dataKeyRef }}
+          {{- end }}
+          {{- range $key, $value := $containerValues.environment.variables }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- range $variableName, $value := $containerValues.environment.metadata }}
+            - name: {{ $variableName }}
+              valueFrom:
+                fieldRef:
+                  fieldPath: {{ $value }}
+          {{- end }}
+          {{- range $configMapName := $containerValues.environment.envFromConfigMaps }}
+          envFrom:
+            - configMapRef:
+                name: {{ $configMapName }}
+          {{- end }}
+          {{- end }}
+          {{- range $key, $value := $containerValues.containerPorts }}
+          ports:
+            - name: {{ $key | quote }}
+              containerPort: {{ $value }}
+              protocol: TCP
+          {{- end }}
+          {{- with $containerValues.livenessProbe }}
+          livenessProbe:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $containerValues.readinessProbe }}
+          readinessProbe:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $containerValues.lifecycle}}
+          lifecycle:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $containerValues.resources }}
+          resources:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $containerValues.volumeMounts }}
+          volumeMounts:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+        {{- end }}
+        - name: {{ include "base.name" $deploymentValues }}
+          {{- with $deploymentValues.Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ $deploymentValues.Values.image.repository }}:{{ $deploymentValues.Values.image.tag | toString }}"
+          {{- if regexMatch "[0-9]" ( $deploymentValues.Values.image.tag | toString ) }}
+          imagePullPolicy: {{ $deploymentValues.Values.image.pullPolicy }}
+          {{- else }}
+          imagePullPolicy: "Always"
+          {{- end }}
+          {{- with $deploymentValues.Values.command }}
+          command:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.args }}
+          args:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- if $deploymentValues.Values.environment }}
+          env:
+          {{- range $variableName, $opts := $deploymentValues.Values.environment.secretVariables }}
+            - name: {{ $variableName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $opts.secretName }}
+                  key: {{ $opts.dataKeyRef }}
+          {{- end }}
+          {{- range $variableName, $opts := $deploymentValues.Values.environment.configmapVariables }}
+            - name: {{ $variableName }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $opts.configmapName }}
+                  key: {{ $opts.dataKeyRef }}
+          {{- end }}
+          {{- range $key, $value := $deploymentValues.Values.environment.variables }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- range $variableName, $value := $deploymentValues.Values.environment.metadata }}
+            - name: {{ $variableName }}
+              valueFrom:
+                fieldRef:
+                  fieldPath: {{ $value }}
+          {{- end }}
+          {{- range $configMapName := $deploymentValues.Values.environment.envFromConfigMaps }}
+          envFrom:
+            - configMapRef:
+                name: {{ $configMapName }}
+          {{- end }}
+          {{- end }}
+          {{- if $deploymentValues.Values.containerPorts }}
+          ports:
+          {{- range $key, $value := $deploymentValues.Values.containerPorts }}
+            - name: {{ $key | quote }}
+              containerPort: {{ $value }}
+              protocol: TCP
+          {{- end }}
+          {{- else if $deploymentValues.Values.service.ports }}
+          ports:
+          {{- range $key, $value := $deploymentValues.Values.service.ports }}
+            - name: {{ $key | quote }}
+              containerPort: {{ $value }}
+              protocol: TCP
+          {{- end }}
+          {{- end }}
+          {{- with $deploymentValues.Values.livenessProbe }}
+          livenessProbe:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.readinessProbe }}
+          readinessProbe:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.lifecycle}}
+          lifecycle:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.resources }}
+          resources:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.volumeMounts }}
+          volumeMounts:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+      {{- if $deploymentValues.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $deploymentValues.Values.nodeSelector | nindent 8 }}
+      {{- else if $deploymentValues.Values.nodeSelectorDefault }}
+      nodeSelector:
+        {{- toYaml $deploymentValues.Values.nodeSelectorDefault | nindent 8 }}
+      {{- end }}
+      {{- if $deploymentValues.Values.affinity }}
+      affinity:
+        {{- toYaml $deploymentValues.Values.affinity | nindent 8 }}
+      {{- else if $deploymentValues.Values.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+        {{- if eq $deploymentValues.Values.podAntiAffinity.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- range $key, $value := $deploymentValues.Values.podAntiAffinity.topology }}
+          - labelSelector:
+              matchExpressions:
+              {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | toString | fromYaml }}
+              - key: {{ $key }}
+                operator: In
+                values:
+                - {{ $value }}
+              {{- end }}
+            topologyKey: {{ .topologyKey }}
+          {{- end }}
+        {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          {{- range $key, $value := $deploymentValues.Values.podAntiAffinity.topology }}
+          - weight: {{ .weight | default 100 }}
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | toString | fromYaml }}
+                - key: {{ $key }}
+                  operator: In
+                  values:
+                  - {{ $value }}
+                {{- end }}
+              topologyKey: {{ .topologyKey }}
+            {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- with $deploymentValues.Values.tolerations }}
+      tolerations:
+{{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $deploymentValues.Values.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- $extraVolumes := include "base.extraVolumes" $deploymentValues -}}
+      {{- if or $extraVolumes $deploymentValues.Values.volumes }}
+      volumes:
+      {{- if $extraVolumes }}
+        {{- include "base.extraVolumes" $deploymentValues | indent 8 }}
+      {{- end }}
+      {{- with $deploymentValues.Values.volumes }}
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- end }}
+{{- end }}
+{{- end }}

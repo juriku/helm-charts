@@ -1,0 +1,300 @@
+# Default values
+
+## set number of desired replics per environment (will be overriden ih hpa is enabled (autoscaling))
+replicaCount: 1
+
+####
+## This section defines any additional deployments to create (will create all that are enabled)
+####
+deployments:
+  default:
+    ## enables default deployment to be installed
+    enabled: true
+  ## add additional blue deployment
+  # blue:
+  #   enabled: true
+  # green:
+  #   ## disable green deployemnt - will not deploy it
+  #   enabled: false
+  #   ## Ovveride default values (will merge values from Values section)
+  #   Values:
+  #     ## override names to avoid errors and duplications
+  #     fullnameOverride: ""
+  #     image:
+  #       tag: green
+
+## set repository in the defaults.yaml 
+image:
+  ## has to be passed
+  # repository: ""
+  ## default pullPolicy is IfNotPresent, and if tag doesn't have a number(int) in it, then forced to Always
+  pullPolicy: IfNotPresent
+  ## default tag, pipeline should add latest tag when pushing to production
+  ## tag will be passed automatically through pipeline
+  tag: "latest"
+
+## secret name for dockerconfigjson secret
+# imagePullSecrets: ""
+
+## you can override the name of your deployment, which will manifest in naming conventions of deployment
+# fullnameOverride: ""
+
+## you can override the name of your main container
+# nameOverride: ""
+
+## override main selector labels
+# selectorLabels:
+#   app: app-blue
+
+## add labels to deployment metadata
+# labelsDeployment:
+#   key: value
+
+## add extra annotations to pod metadata
+# podAnnotations: {}
+
+## default update strategy if HorizontalPodAutoscaler (autoscaling) is not enabled
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+
+## define security context at pod level
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+  # fsGroup: 2000
+
+## define security context at container level
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+## ref: https://cloud.google.com/kubernetes-engine/docs/how-to/container-native-load-balancing
+# terminationGracePeriodSeconds: 180
+# minReadySeconds: 10
+
+## configure service
+service:
+  enabled: true
+  ## override the service name (default is release name or Values.fullnameOverride)
+  # name: service-name
+  ## change type to NodePort if gce ingress (ClusterIP is better for Nginx ingress)
+  type: ClusterIP
+  # annotations:
+  #   key: value
+  # labels:
+  #   key: value
+  # loadBalancerIP: ""
+  # externalTrafficPolicy: Local
+  # ports:
+    ## list of ports
+    # http: 80
+    # grpc: 8080
+  ## if ports not defined, then containerPorts will be used. If none defined, then http: 80
+
+## by default container Ports in deployment will be taken from Values.service.ports, use containerPorts to override
+# containerPorts:
+#   http: 8080
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# livenessProbe:
+#   httpGet:
+#     path: /actuator/health
+#     port: http
+#     scheme: HTTP
+#   initialDelaySeconds: 300
+#   periodSeconds: 10
+#   successThreshold: 1
+#   timeoutSeconds: 5
+#   failureThreshold: 3
+# readinessProbe:
+#   httpGet:
+#     path: /actuator/health
+#     port: http
+#     scheme: HTTP
+#   initialDelaySeconds: 15
+#   periodSeconds: 10
+#   successThreshold: 1
+#   timeoutSeconds: 5
+#   failureThreshold: 3
+
+## quick extra annotations for prometheus scrape config
+## example: https://stackoverflow.com/questions/53365191/monitor-custom-kubernetes-pod-metrics-using-prometheus
+## enable prometheus.io/scrape (boolean)
+prometheusScrape: false
+## define prometheus.io/port
+prometheusScrapePort: http
+## define prometheus.io/path
+prometheusScrapePath: /actuator/prometheus
+
+## enable HorizontalPodAutoscalers
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+  # targetMemoryUtilizationPercentage: 80
+
+# ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+podDisruptionBudget:
+  enabled: false
+  ## default minAvailable is taken from autoscaling.minReplicas if autoscaling enabled, otherwise from replicaCount 
+  # minAvailable: ""
+
+## ref: https://cloud.google.com/kubernetes-engine/docs/how-to/vertical-pod-autoscaling
+verticalPodAutoscaler:
+  enabled: false
+  updateMode: "Off"
+
+# nodeSelector: {}
+
+# if no nodeSelector defined (in case there is a default nodeSelector needed for all apps)
+# nodeSelectorDefault: {}
+
+tolerations: []
+
+# affinity: {}
+
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+podAntiAffinity:
+  enabled: false
+  # hard for requiredDuringSchedulingIgnoredDuringExecution and soft for preferredDuringSchedulingIgnoredDuringExecution
+  type: soft
+  ## default topologies
+  topology:
+  - weight: 50
+    topologyKey: "kubernetes.io/hostname"
+  - weight: 100
+    topologyKey: "failure-domain.beta.kubernetes.io/zone"
+
+lifecycle: {}
+
+# extraContainers:
+#   container-name:
+#     image:
+#       ## if no image defined, then image from default container will be taken
+#       repository: ""
+#       pullPolicy: IfNotPresent
+#       tag: ""
+#     resources:
+#     securityContext:
+#     environment:
+#       variables:
+#     args:
+#       - arg1
+#     command:
+#       - command
+#     volumeMounts:
+#     ## can define volumes at this point or at .Values.volumes
+#     volumes:
+
+## simple way to add variables
+# environment:
+#   variables:
+#     SERVER_PORT: "3000"
+#     NODE_ENV: "staging"
+#   secretVariables:
+#     VAR_NAME_IN_CONTAINER:
+#       secretName: secret_name
+#       dataKeyRef: SECRET_KEY_REFERENCE_NAME
+#   configmapVariables:
+#     VAR_NAME_IN_CONTAINER:
+#       configmapName: configmap_name
+#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME
+#     VAR_NAME_IN_CONTAINER_2:
+#       configmapName: configmap_name
+#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME_2
+## with metadata you can get info, lipe pod name, namespace, ip intot he variable. ref: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/
+#   metadata:
+#     POD_NAME: metadata.name
+## load env vars from configmap
+#   envFromConfigMaps:
+#     - shared-config
+
+## to add volume mounts entries (follow https://kubernetes.io/docs/concepts/storage/volumes/ for syntax)
+# volumes:
+# - name: volume-name
+#   secret:
+#     defaultMode: 420
+#     secretName: secret-name
+# volumes:
+#   - name: sa-firebase-labelling-tool
+#     secret:
+#       secretName: sa-firebase-labelling-tool
+#       items:
+#       - key: service.json
+#         path: service.json
+
+# volumeMounts:
+#   - mountPath: /src/service.json
+#       subPath: service.json
+#     name: sa-firebase-labelling-tool
+#     readOnly: true
+
+## ingress configuration
+ingress:
+  ## to enable - switch to true
+  enabled: false
+  class: nginx
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+  ## to override default dackend
+  # backend:
+  #   serviceName: default-http-backend
+  #   servicePort: 80
+  hosts: {}
+    # - host: chart-example.local
+    ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
+    #   serviceName: service_name
+    ## by default servicePort will be taken from Values.service.ports (http or first in the list), otherwise from containerPorts, to override add:
+    #   servicePort: 8080
+    # - host: chart-example-2.local
+    #   serviceName: service_name_2
+    #   servicePort: 8080
+  tls: []
+  ## tls section will be automatically generated, to override add:
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+## to override default tls secret name add:
+# tls:
+#   default: default-tls-secret-name
+
+## creating secrets:
+# secrets:
+#     encoded:
+#     -   name: sa-credentials
+#         values:
+#             service.json: BASE64_VALUE
+#     decoded:
+#     -   name: secret-values
+#         values:
+#             KEY_NAME1: DECODED_VALUE
+#             KEY_NAME2: DECODED_VALUE
+#     -   name: secret-values2
+#         values:
+#             KEY_NAME3: DECODED_VALUE
+
+## creating configmaps
+# configmaps:
+#   - name: configmap_name
+#     values:
+#       KEY1: VALUE
+#       KEY2: VALUE
+#     valuesMultiLine:
+#       config.json: |-
+#         {
+#           "key": value
+#         }

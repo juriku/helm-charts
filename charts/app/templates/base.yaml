@@ -1,0 +1,7 @@
+{{ include "base.configmaps" . }}
+{{ include "base.secrets" . }}
+{{ include "base.service" . }}
+{{ include "base.ingress" . }}
+{{ include "base.verticalPodAutoscaler" . }}
+{{ include "base.podDisruptionBudget" . }}
+{{ include "base.horizontalPodAutoscaler" . }}
