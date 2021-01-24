@@ -1,6 +1,0 @@
-dependencies:
-- name: base
-  repository: https://juriku.github.io/helm-charts
-  version: 0.1.0
-digest: sha256:615da835f60c14ebc06be3fb3ba798ff7e35f8aae41145a89270e2f9fa4dee03
-generated: "2021-01-24T14:05:13.657294Z"
