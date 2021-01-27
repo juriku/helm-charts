@@ -91,6 +91,11 @@ define container vars
 */}}
 {{- define "base.environment" -}}
 {{- if .environment }}
+{{- range $configMapName := .environment.envFromConfigMaps }}
+envFrom:
+  - configMapRef:
+      name: {{ $configMapName }}
+{{- end }}
 env:
 {{- range $variableName, $value := .environment.metadata }}
   - name: {{ $variableName }}
@@ -111,11 +116,6 @@ env:
       configMapKeyRef:
         name: {{ $opts.configmapName }}
         key: {{ $opts.dataKeyRef }}
-{{- end }}
-{{- range $configMapName := .environment.envFromConfigMaps }}
-envFrom:
-  - configMapRef:
-      name: {{ $configMapName }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
   - name: {{ $key | quote }}
