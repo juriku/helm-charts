@@ -29,6 +29,29 @@ entries:
     version: 0.3.3
   base:
   - apiVersion: v2
+    created: "2021-01-27T14:47:09.36759466Z"
+    description: A Helm chart for Kubernetes with helm named templates
+    digest: afe60b855f3f055d340ce864f4ed6e6fd44d942e1a7f643c22b5158ca8a709b5
+    keywords:
+    - deployment
+    - configmap
+    - secret
+    - HorizontalPodAutoscaler
+    - hpa
+    - VerticalPodAutoscaler
+    - podDisruptionBudget
+    - service
+    - ingress
+    - storageClass
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: base
+    type: library
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/base-0.1.5/base-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v2
     created: "2021-01-27T11:18:45.918891744Z"
     description: A Helm chart for Kubernetes with helm named templates
     digest: d3dd2b0f688dca0a70a3f84ea5e675e83f10063e67ea726c457a5eae3d5901ca
