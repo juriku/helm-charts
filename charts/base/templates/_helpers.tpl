@@ -56,7 +56,8 @@ app: {{ include "base.fullname" . }}
 service port default
 */}}
 {{- define "base.servicePortDefault" -}}
-{{- if .Values.service.ports }}
+{{- $serviceValues := .Values.service | default dict -}}
+{{- if $serviceValues.ports }}
 {{- if .Values.service.ports.http }}
 {{- printf "http" }}
 {{- else }}
