@@ -2,7 +2,8 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "base.fullname" . -}}
 {{- $svcPort := include "base.servicePortDefault" . -}}
-{{- $svcName := .Values.service.name | default $fullName -}}
+{{- $serviceValues := .Values.service | default dict -}}
+{{- $svcName := $serviceValues.name | default $fullName -}}
 ---
 {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1beta1
