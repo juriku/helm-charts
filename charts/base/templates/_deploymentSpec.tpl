@@ -92,6 +92,12 @@ define container vars
 {{- define "base.environment" -}}
 {{- if .environment }}
 env:
+{{- range $variableName, $value := .environment.metadata }}
+  - name: {{ $variableName }}
+    valueFrom:
+      fieldRef:
+        fieldPath: {{ $value }}
+{{- end }}
 {{- range $variableName, $opts := .environment.secretVariables }}
   - name: {{ $variableName }}
     valueFrom:
@@ -106,20 +112,14 @@ env:
         name: {{ $opts.configmapName }}
         key: {{ $opts.dataKeyRef }}
 {{- end }}
-{{- range $key, $value := .environment.variables }}
-  - name: {{ $key | quote }}
-    value: {{ $value | quote }}
-{{- end }}
-{{- range $variableName, $value := .environment.metadata }}
-  - name: {{ $variableName }}
-    valueFrom:
-      fieldRef:
-        fieldPath: {{ $value }}
-{{- end }}
 {{- range $configMapName := .environment.envFromConfigMaps }}
 envFrom:
   - configMapRef:
       name: {{ $configMapName }}
+{{- end }}
+{{- range $key, $value := .environment.variables }}
+  - name: {{ $key | quote }}
+    value: {{ $value | quote }}
 {{- end }}
 {{- end }}
 {{- end }}
