@@ -1,5 +1,6 @@
 {{- define "base.podDisruptionBudget" -}}
 {{- if .Values.podDisruptionBudget.enabled }}
+{{- $autoscaling := .Values.autoscaling | default dict -}}
 ---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
@@ -8,8 +9,8 @@ metadata:
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
-  {{- else if .Values.autoscaling.enabled }}
-  minAvailable: {{ .Values.autoscaling.minReplicas }}
+  {{- else if and $autoscaling.enabled $autoscaling.minReplicas }}
+  minAvailable: {{ $autoscaling.minReplicas }}
   {{- else }}
   minAvailable: {{ .Values.replicaCount }}
   {{- end }}

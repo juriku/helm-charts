@@ -5,3 +5,4 @@
 {{ include "base.verticalPodAutoscaler" . }}
 {{ include "base.podDisruptionBudget" . }}
 {{ include "base.horizontalPodAutoscaler" . }}
+{{ include "base.deployment" . }}
