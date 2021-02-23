@@ -22,4 +22,5 @@ maintainers:
 
 dependencies:
   - name: base
-    repository: file://../base
+    repository: https://juriku.github.io/helm-charts
+    version: 0.1.8
