@@ -1,0 +1,99 @@
+deployments:
+  default:
+    Values:
+      # fullnameOverride: ""
+      # nameOverride: ""
+
+image:
+  # repository:
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+annotations: {}
+
+imagePullSecrets: []
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+nodeSelector: {}
+
+# if no nodeSelector defined
+nodeSelectorDefault: {}
+tolerations: []
+
+affinity: {}
+
+restartPolicy: "Never"
+
+backoffLimit: 1
+
+## simple way to add variables
+environment:
+  metadata: {}
+  variables: {}
+  secretVariables: {}
+  configmapVariables: {}
+# environment:
+#   variables:
+#     SERVER_PORT: "3000"
+#     NODE_ENV: "staging"
+#   secretVariables:
+#     VAR_NAME_IN_CONTAINER:
+#       secretName: secret_name
+#       dataKeyRef: SECRET_KEY_REFERENCE_NAME
+#   configmapVariables:
+#     VAR_NAME_IN_CONTAINER:
+#       configmapName: configmap_name
+#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME
+#     VAR_NAME_IN_CONTAINER_2:
+#       configmapName: configmap_name
+#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME_2
+## with metadata you can get info, lipe pod name, namespace, ip intot he variable. ref: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/
+#   metadata:
+#     POD_NAME: metadata.name
+## load env vars from configmap
+#   envFromConfigMaps:
+#     - shared-config
+
+# extraContainers:
+#   container-name:
+#     image:
+#       ## if no image defined, then image from default container will be taken
+#       repository: ""
+#       pullPolicy: IfNotPresent
+#       tag: ""
+#     resources:
+#     securityContext:
+#     environment:
+#       variables:
+#     args:
+#       - arg1
+#     command:
+#       - command
+#     volumeMounts:
+#     ## can define volumes at this point or at .Values.volumes
+#     volumes:
+
+## to add volume mounts entries (follow https://kubernetes.io/docs/concepts/storage/volumes/ for syntax)
+# volumes:
+# - name: volume-name
+#   secret:
+#     defaultMode: 420
+#     secretName: secret-name
+# volumes:
+#   - name: sa-firebase-labelling-tool
+#     secret:
+#       secretName: sa-firebase-labelling-tool
+#       items:
+#       - key: service.json
+#         path: service.json
+
+# volumeMounts:
+#   - mountPath: /src/service.json
+#       subPath: service.json
+#     name: sa-firebase-labelling-tool
+#     readOnly: true

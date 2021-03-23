@@ -61,43 +61,15 @@ spec:
       containers:
         {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
         - name: {{ $containerName }}
-          {{- with $containerValues.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-          {{- with $containerValues.command }}
-          command:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $containerValues.args }}
-          args:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with include "base.environment" $containerValues }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
           {{- range $key, $value := $containerValues.containerPorts }}
           ports:
             - name: {{ $key | quote }}
               containerPort: {{ $value }}
               protocol: TCP
           {{- end }}
-          {{- with $containerValues.livenessProbe }}
-          livenessProbe:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $containerValues.readinessProbe }}
-          readinessProbe:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $containerValues.lifecycle}}
-          lifecycle:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $containerValues.resources }}
-          resources:
-{{ toYaml . | indent 12 }}
+          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- . | trim | nindent 10 }}
           {{- end }}
           {{- with $containerValues.volumeMounts }}
           volumeMounts:
@@ -105,22 +77,7 @@ spec:
           {{- end }}
         {{- end }}
         - name: {{ include "base.name" $deploymentValues }}
-          {{- with $deploymentValues.Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
-          {{- with $deploymentValues.Values.command }}
-          command:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $deploymentValues.Values.args }}
-          args:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with include "base.environment" $deploymentValues.Values }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
           {{- if $deploymentValues.Values.containerPorts }}
           ports:
           {{- range $key, $value := $deploymentValues.Values.containerPorts }}
@@ -136,39 +93,15 @@ spec:
               protocol: TCP
           {{- end }}
           {{- end }}
-          {{- with $deploymentValues.Values.livenessProbe }}
-          livenessProbe:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $deploymentValues.Values.readinessProbe }}
-          readinessProbe:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $deploymentValues.Values.lifecycle}}
-          lifecycle:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with $deploymentValues.Values.resources }}
-          resources:
-{{ toYaml . | indent 12 }}
+          {{- with include "base.podDefaultProperties" $deploymentValues.Values }}
+          {{- . | trim | nindent 10 }}
           {{- end }}
           {{- with $deploymentValues.Values.volumeMounts }}
           volumeMounts:
 {{ toYaml . | indent 12 }}
           {{- end }}
-      {{- if $deploymentValues.Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml $deploymentValues.Values.nodeSelector | nindent 8 }}
-      {{- else if $deploymentValues.Values.nodeSelectorDefault }}
-      nodeSelector:
-        {{- toYaml $deploymentValues.Values.nodeSelectorDefault | nindent 8 }}
-      {{- end }}
-      {{- with include "base.affinity" $deploymentValues }}
+      {{- with include "base.NodeScheduling" $deploymentValues }}
       {{- . | trim | nindent 6 }}
-      {{- end }}
-      {{- with $deploymentValues.Values.tolerations }}
-      tolerations:
-{{ toYaml . | nindent 8 }}
       {{- end }}
       {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ $deploymentValues.Values.terminationGracePeriodSeconds }}

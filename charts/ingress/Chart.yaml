@@ -2,7 +2,7 @@ apiVersion: v2
 name: ingress
 description: A Helm chart for Kubernetes ingress
 type: application
-version: 0.2.0
+version: 0.2.1
 
 keywords:
   - ingress
@@ -13,5 +13,4 @@ maintainers:
 
 dependencies:
   - name: base
-    repository: https://juriku.github.io/helm-charts
-    version: 0.1.0
+    repository: file://../base

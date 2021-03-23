@@ -49,7 +49,7 @@ pod affinity
 {{- $deploymentValues := . -}}
 affinity:
 {{- with .Values.affinity }}
-  {{- toYaml . | nindent 2 }}
+{{ toYaml . | indent 2 }}
 {{- end }}
 {{- if $podAntiAffinity.enabled }}
   podAntiAffinity:
@@ -87,14 +87,36 @@ affinity:
 {{- end }}
 
 {{/*
+deployemnt Node Scheduling
+*/}}
+{{- define "base.NodeScheduling" -}}
+{{- include "base.affinity" . }}
+{{- if .Values.nodeSelector }}
+nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 2 }}
+{{- else if .Values.nodeSelectorDefault }}
+nodeSelector:
+{{ toYaml .Values.nodeSelectorDefault | indent 2 }}
+{{- end }}
+{{- with .Values.tolerations }}
+tolerations:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
 define container vars
 */}}
 {{- define "base.environment" -}}
 {{- if .environment }}
-{{- if .environment.envFromConfigMaps }}
+{{- if or .environment.envFromConfigMaps .environment.envFromSecrets }}
 envFrom:
 {{- range $configMapName := .environment.envFromConfigMaps }}
   - configMapRef:
+      name: {{ $configMapName }}
+{{- end }}
+{{- range $configMapName := .environment.envFromSecrets }}
+  - secretRef:
       name: {{ $configMapName }}
 {{- end }}
 {{- end }}
@@ -124,4 +146,78 @@ env:
     value: {{ $value | quote }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+{{/*
+define pod probes
+*/}}
+{{- define "base.podProbes" -}}
+{{- with .livenessProbe }}
+livenessProbe:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- with .readinessProbe }}
+readinessProbe:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- with .startupProbe }}
+startupProbe:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+define pod lifecycle
+*/}}
+{{- define "base.podLifecycle" -}}
+{{- with .lifecycle }}
+resources:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+define pod resources
+*/}}
+{{- define "base.podResources" -}}
+{{- with .resources }}
+resources:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+define pod security
+*/}}
+{{- define "base.podSecurity" -}}
+{{- with .securityContext }}
+securityContext:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+define pod command and args
+*/}}
+{{- define "base.podCommand" -}}
+{{- with .command }}
+command:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- with .args }}
+args:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+define default pod properties
+*/}}
+{{- define "base.podDefaultProperties" -}}
+{{- include "base.podCommand" . }}
+{{- include "base.podSecurity" . }}
+{{- include "base.environment" . }}
+{{- include "base.podProbes" . }}
+{{- include "base.podLifecycle" . }}
+{{- include "base.podResources" . }}
 {{- end }}

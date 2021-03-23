@@ -34,7 +34,7 @@ ingress:
 #   default: default-tls-secret-name
 
 ## can be used to define default port name ("http")
-# service:
+service: {}
 #   ports:
 #     ## will take first match "http"
 #     http: 8080

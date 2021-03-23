@@ -1,0 +1,3 @@
+{{ include "base.configmaps" . }}
+{{ include "base.secrets" . }}
+{{ include "base.job" . }}

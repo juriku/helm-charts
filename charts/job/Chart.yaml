@@ -1,11 +1,11 @@
 apiVersion: v2
-name: service
-description: A Helm chart for Kubernetes service
+name: job
+description: A Helm chart for Kubernetes job
 type: application
 version: 0.2.1
 
 keywords:
-  - service
+  - cronjob
 
 maintainers:
   - name: juri

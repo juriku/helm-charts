@@ -1,0 +1,20 @@
+apiVersion: v2
+name: default-base
+description: A Helm chart for Kubernetes - default-base for namespaces
+version: 0.3.1
+
+keywords:
+  - BackendConfig
+  - StorageClass
+  - configmap
+  - secret
+  - tls
+  - dockerconfigjson
+
+maintainers:
+  - name: juri
+    url: https://github.com/juriku/helm-charts
+
+dependencies:
+  - name: base
+    repository: file://../base

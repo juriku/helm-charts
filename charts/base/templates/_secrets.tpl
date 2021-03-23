@@ -19,7 +19,7 @@ metadata:
 data:
 {{- range $key, $value := $secretValues.values }}
   {{- if eq $encodeMode "decoded" }}
-  {{ $key -}}: {{ $value | b64enc | quote -}}
+  {{ $key -}}: {{ $value | toString | b64enc | quote -}}
   {{- else if eq $encodeMode "encoded" }}
   {{ $key -}}: {{ $value | quote -}}
   {{- end }}

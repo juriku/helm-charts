@@ -3,7 +3,7 @@ name: app
 description: A Helm chart for Kubernetes Deployment
 type: application
 
-version: 0.3.4
+version: 0.3.6
 
 keywords:
   - deployment
@@ -22,5 +22,4 @@ maintainers:
 
 dependencies:
   - name: base
-    repository: https://juriku.github.io/helm-charts
-    version: 0.1.8
+    repository: file://../base
