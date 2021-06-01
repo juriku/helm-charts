@@ -6,3 +6,5 @@
 {{ include "base.podDisruptionBudget" . }}
 {{ include "base.horizontalPodAutoscaler" . }}
 {{ include "base.deployment" . }}
+{{ include "base.argoRollouts" . }}
+{{ include "base.flagger" . }}

@@ -4,8 +4,13 @@
 {{- $deploymentValues := merge dict $deploymentValuesOverride $root -}}
 {{- if $deploymentValues.enabled }}
 ---
+{{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "Deployment" ) }}
+apiVersion: {{ $deploymentValues.Values.argo.rollouts.apiVersion }}
+kind: {{ $deploymentValues.Values.argo.rollouts.kind }}
+{{- else }}
 apiVersion: {{ $deploymentValues.Values.apiVersion | default "apps/v1" }}
-kind: Deployment
+kind: {{ $deploymentValues.Values.kind | default "Deployment" }}
+{{- end }}
 metadata:
   name: {{ include "base.fullname" $deploymentValues }}
   labels:
@@ -13,18 +18,30 @@ metadata:
     {{- with $deploymentValues.Values.labelsDeployment }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with $deploymentValues.Values.annotations }}
+  {{- if $deploymentValues.Values.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
   {{- end }}
 spec:
-{{- if not $deploymentValues.Values.autoscaling.enabled }}
+  {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "workloadRef" ) }}
+  replicas: 0
+  {{- else if $deploymentValues.Values.argo.rollouts.enabled }}
+  {{- with $deploymentValues.Values.argo.rollouts.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if $deploymentValues.Values.autoscaling.enabled }}
+  replicas: {{ $deploymentValues.Values.autoscaling.minReplicas }}
+  {{- else }}
+  replicas: {{ $deploymentValues.Values.replicaCount }}
+  {{- end }}
+  {{- else if not $deploymentValues.Values.autoscaling.enabled }}
   replicas: {{ $deploymentValues.Values.replicaCount }}
   {{- with $deploymentValues.Values.strategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
+  {{- end }}
   {{- if $deploymentValues.Values.minReadySeconds }}
   minReadySeconds: {{ $deploymentValues.Values.minReadySeconds }}
   {{- end }}
@@ -38,25 +55,34 @@ spec:
     metadata:
       {{- if or $deploymentValues.Values.prometheusScrape $deploymentValues.Values.podAnnotations }}
       annotations:
-      {{- if $deploymentValues.Values.prometheusScrape }}
-        prometheus.io/path: {{ $deploymentValues.Values.prometheusScrapePath }}
-        prometheus.io/port: {{ $deploymentValues.Values.prometheusScrapePort }}
+        {{- if $deploymentValues.Values.prometheusScrape }}
+        prometheus.io/path: {{ $deploymentValues.Values.prometheusScrapePath | quote }}
+        prometheus.io/port: {{ $deploymentValues.Values.prometheusScrapePort | quote }}
         prometheus.io/scrape: "true"
+        {{- end }}
+        {{- include "base.valuesPairs" $deploymentValues.Values.podAnnotations | trim | nindent 8 }}
       {{- end }}
-    {{- with $deploymentValues.Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- end }}
       labels:
         {{- include "base.selectorLabels" $deploymentValues | nindent 8 }}
     spec:
-      {{- if $deploymentValues.Values.imagePullSecrets }}
-      imagePullSecrets:
-        - name: {{ $deploymentValues.Values.imagePullSecrets }}
+      {{- with include "base.containerDefaultProperties" $deploymentValues }}
+      {{- . | trim | nindent 6 }}
       {{- end }}
-      {{- with $deploymentValues.Values.podSecurityContext }}
-      securityContext:
-{{ toYaml . | indent 8 }}
+      {{- if $deploymentValues.Values.initContainers }}
+      initContainers:
+        {{- range $containerName, $containerValues := $deploymentValues.Values.initContainers }}
+        - name: {{ $containerName }}
+          {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
+          {{- range $key, $value := $containerValues.containerPorts }}
+          ports:
+            - name: {{ $key | quote }}
+              containerPort: {{ $value }}
+              protocol: TCP
+          {{- end }}
+          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- . | trim | nindent 10 }}
+          {{- end }}
+        {{- end }}
       {{- end }}
       containers:
         {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
@@ -70,10 +96,6 @@ spec:
           {{- end }}
           {{- with include "base.podDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
-          {{- end }}
-          {{- with $containerValues.volumeMounts }}
-          volumeMounts:
-{{ toYaml . | indent 12 }}
           {{- end }}
         {{- end }}
         - name: {{ include "base.name" $deploymentValues }}
@@ -96,13 +118,6 @@ spec:
           {{- with include "base.podDefaultProperties" $deploymentValues.Values }}
           {{- . | trim | nindent 10 }}
           {{- end }}
-          {{- with $deploymentValues.Values.volumeMounts }}
-          volumeMounts:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-      {{- with include "base.NodeScheduling" $deploymentValues }}
-      {{- . | trim | nindent 6 }}
-      {{- end }}
       {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ $deploymentValues.Values.terminationGracePeriodSeconds }}
       {{- end }}

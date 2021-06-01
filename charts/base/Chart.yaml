@@ -1,9 +1,9 @@
 apiVersion: v2
 name: base
-description: A Helm chart for Kubernetes with helm named templates 
+description: A Helm chart for Kubernetes with helm named templates
 type: library
 
-version: 0.2.0
+version: 0.4.17
 
 keywords:
   - deployment

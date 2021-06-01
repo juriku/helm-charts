@@ -50,4 +50,61 @@ spec:
   selector:
     {{- include "base.selectorLabels" . | nindent 4 }}
 {{- end }}
+{{- if .Values.extraServices }}
+{{- $root := . -}}
+{{- range $serviceName, $serviceValues := .Values.extraServices }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "base.labels" $root | nindent 4 }}
+  {{- with $serviceValues.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $serviceValues.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $serviceValues.type | default $root.Values.service.type }}
+  {{- if $serviceValues.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ $serviceValues.externalTrafficPolicy }}
+  {{- end }}
+  {{- if $serviceValues.loadBalancerIP }}
+  loadBalancerIP: {{ $serviceValues.loadBalancerIP | quote }}
+  {{- end }}
+  ports:
+  {{- if $serviceValues.ports }}
+  {{- range $key, $value := $serviceValues.ports }}
+    - port: {{ $value }}
+      targetPort: {{ $key | quote }}
+      protocol: TCP
+      name: {{ $key | quote }}
+  {{- end }}
+  {{- else if $root.Values.service.ports }}
+  {{- range $key, $value := $root.Values.service.ports }}
+    - port: {{ $value }}
+      targetPort: {{ $key | quote }}
+      protocol: TCP
+      name: {{ $key | quote }}
+  {{- end }}
+  {{- else if $root.Values.containerPorts }}
+  {{- range $key, $value := $root.Values.containerPorts }}
+    - port: {{ $value }}
+      targetPort: {{ $key | quote }}
+      protocol: TCP
+      name: {{ $key | quote }}
+  {{- end }}
+  {{- else }}
+    - port: 80
+      targetPort: "http"
+      protocol: TCP
+      name: "http"
+  {{- end }}
+  selector:
+    {{- include "base.selectorLabels" $root | nindent 4 }}
+{{- end }}
+{{- end }}
 {{- end }}

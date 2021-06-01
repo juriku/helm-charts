@@ -130,6 +130,15 @@ resources: {}
 #   timeoutSeconds: 5
 #   failureThreshold: 3
 
+## specify service account
+# serviceAccountName: sa-name
+
+## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server
+# automountServiceAccountToken:
+#   enabled: false
+## will result in:
+## automountServiceAccountToken: false
+
 ## quick extra annotations for prometheus scrape config
 ## example: https://stackoverflow.com/questions/53365191/monitor-custom-kubernetes-pod-metrics-using-prometheus
 ## enable prometheus.io/scrape (boolean)
@@ -199,6 +208,23 @@ lifecycle: {}
 #     volumeMounts:
 #     ## can define volumes at this point or at .Values.volumes
 #     volumes:
+
+# initContainers:
+#   container-name:
+#     image:
+#       ## if no image defined, then image from default container will be taken
+#       repository: ""
+#       pullPolicy: IfNotPresent
+#       tag: ""
+#     resources:
+#     securityContext:
+#     environment:
+#       variables:
+#     args:
+#       - arg1
+#     command:
+#       - command
+#     volumeMounts:
 
 ## simple way to add variables
 # environment:
@@ -298,3 +324,29 @@ ingress:
 #         {
 #           "key": value
 #         }
+
+## Argo CD rollouts
+## ref: https://argoproj.github.io/argo-rollouts/migrating/
+## ref spec: https://argoproj.github.io/argo-rollouts/features/specification/
+
+## ref: https://argoproj.github.io/argo-rollouts/migrating/#convert-deployment-to-rollout
+## change apiVersion and kind to Convert Deployment to Rollout
+# apiVersion: argoproj.io/v1alpha1
+# kind: Rollout
+
+argo:
+  rollouts:
+    enabled: false
+    ## ref: https://argoproj.github.io/argo-rollouts/migrating/#convert-deployment-to-rollout
+    ## changing apiVersion and kind to Convert Deployment to Rollout
+    type: Deployment
+    ## https://argoproj.github.io/argo-rollouts/migrating/#reference-deployment-from-rollout
+    ## Reference Deployment From Rollout (true)
+    ## type: workloadRef
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    strategy: {}
+      # canary:
+      #   steps:
+      #     - setWeight: 20
+      #     - pause: {duration: 10s}

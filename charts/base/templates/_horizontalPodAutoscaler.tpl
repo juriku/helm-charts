@@ -9,8 +9,13 @@ metadata:
     {{- include "base.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
+    {{- if and .Values.argo.rollouts.enabled }}
+    apiVersion: {{ .Values.argo.rollouts.apiVersion }}
+    kind: {{ .Values.argo.rollouts.kind }}
+    {{- else }}
+    apiVersion: {{ .Values.apiVersion | default "apps/v1" }}
+    kind: {{ .Values.kind | default "Deployment" }}
+    {{- end }}
     name: {{ include "base.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}

@@ -2,7 +2,7 @@ apiVersion: v2
 name: cronjob
 description: A Helm chart for Kubernetes cronjob
 type: application
-version: 0.2.1
+version: 0.4.4
 
 keywords:
   - cronjob
