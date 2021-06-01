@@ -142,8 +142,10 @@ env:
         key: {{ $opts.dataKeyRef }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
+  {{- if $value }}
   - name: {{ $key | quote }}
     value: {{ $value | quote }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -1,7 +1,7 @@
 apiVersion: v2
 name: default-base
 description: A Helm chart for Kubernetes - default-base for namespaces
-version: 0.4.0
+version: 0.4.20
 
 keywords:
   - BackendConfig
