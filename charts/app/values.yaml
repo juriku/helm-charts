@@ -153,8 +153,48 @@ autoscaling:
   enabled: false
   minReplicas: 2
   maxReplicas: 10
-  targetCPUUtilizationPercentage: 50
-  # targetMemoryUtilizationPercentage: 80
+  # pubsub_subscription:
+  # - subscription_id: "subscription"
+  #   metric: "num_undelivered_messages"
+  #   AverageValue: 200
+  # cpu:
+  # - type: Utilization
+  #   averageUtilization: 50
+  # memory:
+  # - averageUtilization: 50
+
+## enable keda
+## ref: https://keda.sh/docs/2.3/concepts/scaling-deployments/
+keda:
+  enabled: false
+  # envSourceContainerName: container-name             # Optional. Default: .spec.template.spec.containers[0]
+  # pollingInterval: 30                                # Optional. Default: 30 seconds
+  # cooldownPeriod:  300                               # Optional. Default: 300 seconds
+  # minReplicaCount: 0                                 # Optional. Default: 0
+  # maxReplicaCount: 100                               # Optional. Default: 100
+  # advanced:                                          # Optional. Section to specify advanced options
+  #   restoreToOriginalReplicaCount: true/false        # Optional. Default: false
+  #   horizontalPodAutoscalerConfig:                   # Optional. Section to specify HPA related options
+  #     behavior:                                      # Optional. Use to modify HPA's scaling behavior
+  #       scaleDown:
+  #         stabilizationWindowSeconds: 300
+  #         policies:
+  #         - type: Percent
+  #           value: 100
+  #           periodSeconds: 15
+  # triggers:
+  # - type: gcp-pubsub
+  #   metadata:
+  #     subscriptionSize: "5"
+  #     subscriptionName: "audit-logs-subscription"
+  #     credentialsFromEnv: "GOOGLE_APPLICATION_CREDENTIALS"
+  ## or 
+  #   authenticationRef:
+  #       name: .Release.Name
+  # secretTargetRef:
+  # - parameter: GoogleApplicationCredentials # - Default is GoogleApplicationCredentials
+  #   name: pubsub-secret        # Required. Refers to the name of the secret
+  #   key: GOOGLE_APPLICATION_CREDENTIALS # Required - Default is GOOGLE_APPLICATION_CREDENTIALS
 
 # ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
 podDisruptionBudget:

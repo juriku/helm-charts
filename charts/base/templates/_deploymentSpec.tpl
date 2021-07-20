@@ -142,10 +142,8 @@ env:
         key: {{ $opts.dataKeyRef }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
-  {{- if $value }}
   - name: {{ $key | quote }}
-    value: {{ $value | quote }}
-  {{- end }}
+    value: {{ $value | toString | default "" | quote }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -214,7 +212,9 @@ define container security
 {{- define "base.imagePullSecrets" -}}
 {{- if .imagePullSecrets }}
 imagePullSecrets:
-  - name: {{ .imagePullSecrets }}
+{{- range .imagePullSecrets }}
+  - name: {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}
 
