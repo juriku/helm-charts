@@ -59,7 +59,7 @@ spec:
         name: cpu
         target:
           type: {{ .type | default "Utilization" | quote }}
-          averageUtilization: {{ .averageUtilization | default 50 | quote }}
+          averageUtilization: {{ .averageUtilization | default 50 }}
   {{- end }}
   {{- range .Values.autoscaling.memory }}
     - type: Resource
@@ -67,7 +67,7 @@ spec:
         name: cpu
         target:
           type: {{ .type | default "Utilization" | quote  }}
-          averageUtilization: {{ .averageUtilization | default 50 | quote  }}
+          averageUtilization: {{ .averageUtilization | default 50 }}
   {{- end }}
   {{- range .Values.autoscaling.pubsub_subscription }}
     - type: External
@@ -79,7 +79,7 @@ spec:
              resource.labels.subscription_id: {{ .subscription_id | quote }}
         target:
           type: {{ .type | default "AverageValue" | quote  }}
-          averageValue: {{ .AverageValue | default 100 | quote  }}
+          averageValue: {{ .AverageValue | default 100 }}
   {{- end }}
 {{- end }}
 {{- end }}

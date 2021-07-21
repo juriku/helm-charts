@@ -142,8 +142,9 @@ env:
         key: {{ $opts.dataKeyRef }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
+{{- $valueStr := $value | toString }}
   - name: {{ $key | quote }}
-    value: {{ $value | toString | default "" | quote }}
+    value: {{ if eq $valueStr "<nil>" }}""{{ else }}{{ $valueStr | quote }}{{ end }}
 {{- end }}
 {{- end }}
 {{- end }}

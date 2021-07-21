@@ -25,18 +25,17 @@ metadata:
 spec:
   {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "workloadRef" ) }}
   replicas: 0
-  {{- else if $deploymentValues.Values.argo.rollouts.enabled }}
-  {{- with $deploymentValues.Values.argo.rollouts.strategy }}
-  strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- if $deploymentValues.Values.autoscaling.enabled }}
+  {{- else if $deploymentValues.Values.autoscaling.enabled }}
   replicas: {{ $deploymentValues.Values.autoscaling.minReplicas }}
   {{- else }}
   replicas: {{ $deploymentValues.Values.replicaCount }}
   {{- end }}
-  {{- else if not $deploymentValues.Values.autoscaling.enabled }}
-  replicas: {{ $deploymentValues.Values.replicaCount }}
+  {{- if $deploymentValues.Values.argo.rollouts.enabled }}
+  {{- with $deploymentValues.Values.argo.rollouts.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
   {{- with $deploymentValues.Values.strategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
