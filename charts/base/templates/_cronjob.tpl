@@ -3,7 +3,7 @@
 {{- range $deploymentName, $deploymentValuesOverride := .Values.deployments }}
 {{- $deploymentValues := merge dict $deploymentValuesOverride $root }}
 ---
-apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1beta1" }}
+apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
 kind: CronJob
 metadata:
 {{- if eq ( $deploymentName ) "default" }}
@@ -38,7 +38,7 @@ spec:
       {{- end }}
       template:
         spec:
-          {{- with include "base.containerDefaultProperties" $deploymentValues }}
+          {{- with include "base.podDefaultProperties" $deploymentValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
           {{- if $deploymentValues.Values.activeDeadlineSeconds }}
@@ -49,7 +49,7 @@ spec:
             {{- range $containerName, $containerValues := $deploymentValues.Values.initContainers }}
             - name: {{ $containerName }}
               {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-              {{- with include "base.podDefaultProperties" $containerValues }}
+              {{- with include "base.containerDefaultProperties" $containerValues }}
               {{- . | trim | nindent 14 }}
               {{- end }}
             {{- end }}
@@ -58,13 +58,13 @@ spec:
             {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
             - name: {{ $containerName }}
               {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 14 }}
-              {{- with include "base.podDefaultProperties" $containerValues }}
+              {{- with include "base.containerDefaultProperties" $containerValues }}
               {{- . | trim | nindent 14 }}
               {{- end }}
             {{- end }}
             - name: {{ include "base.name" $deploymentValues }}
               {{- include "base.image" $deploymentValues.Values.image | nindent 14 }}
-              {{- with include "base.podDefaultProperties" $deploymentValues.Values }}
+              {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
               {{- . | trim | nindent 14 }}
               {{- end }}
           {{- with include "base.volumes" $deploymentValues }}

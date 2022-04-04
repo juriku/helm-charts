@@ -25,9 +25,7 @@ metadata:
 spec:
   {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "workloadRef" ) }}
   replicas: 0
-  {{- else if $deploymentValues.Values.autoscaling.enabled }}
-  replicas: {{ $deploymentValues.Values.autoscaling.minReplicas }}
-  {{- else }}
+  {{- else if not $deploymentValues.Values.autoscaling.enabled }}
   replicas: {{ $deploymentValues.Values.replicaCount }}
   {{- end }}
   {{- if $deploymentValues.Values.argo.rollouts.enabled }}
@@ -64,7 +62,7 @@ spec:
       labels:
         {{- include "base.selectorLabels" $deploymentValues | nindent 8 }}
     spec:
-      {{- with include "base.containerDefaultProperties" $deploymentValues }}
+      {{- with include "base.podDefaultProperties" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
       {{- if $deploymentValues.Values.initContainers }}
@@ -78,7 +76,7 @@ spec:
               containerPort: {{ $value }}
               protocol: TCP
           {{- end }}
-          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
@@ -93,7 +91,7 @@ spec:
               containerPort: {{ $value }}
               protocol: TCP
           {{- end }}
-          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
@@ -114,7 +112,7 @@ spec:
               protocol: TCP
           {{- end }}
           {{- end }}
-          {{- with include "base.podDefaultProperties" $deploymentValues.Values }}
+          {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
           {{- . | trim | nindent 10 }}
           {{- end }}
       {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}

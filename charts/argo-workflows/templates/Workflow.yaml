@@ -1,0 +1,36 @@
+{{- if .Values.workflows }}
+{{- $appDefaults := .Values.workflowDefaults -}}
+apiVersion: v1
+kind: List
+items:
+{{- range $appValuesOrig := .Values.workflows }}
+{{- $appValues := merge dict $appValuesOrig $appDefaults }}
+  - apiVersion: argoproj.io/v1alpha1
+    kind: Workflow
+    metadata:
+      {{- if $appValues.annotations }}
+      annotations:
+      {{- range $key, $value := $appValues.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+      {{- if $appValues.labels }}
+      labels:
+{{- toYaml $appValues.labels | nindent 8 }}
+      {{- end }}
+      {{- if $appValues.name }}
+      name: {{ $appValues.name }}
+      {{- else }}
+      generateName: {{ $appValues.generateName }}
+      {{- end }}
+      {{- if $appValues.namespace }}
+      namespace: {{ $appValues.namespace }}
+      {{- end }}
+      {{- if $appValues.finalizers }}
+      finalizers:
+{{- toYaml $appValues.finalizers | nindent 8 }}
+      {{- end }}
+    spec:
+{{- toYaml $appValues.spec | nindent 6 }}
+{{- end }}
+{{- end }}

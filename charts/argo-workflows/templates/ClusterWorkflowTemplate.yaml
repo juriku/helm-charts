@@ -1,0 +1,25 @@
+{{- if .Values.clusterWorkflowTemplates }}
+{{- $appDefaults := .Values.clusterWorkflowTemplateDefaults -}}
+apiVersion: v1
+kind: List
+items:
+{{- range $appValuesOrig := .Values.clusterWorkflowTemplates }}
+{{- $appValues := merge dict $appValuesOrig $appDefaults }}
+  - apiVersion: argoproj.io/v1alpha1
+    kind: ClusterWorkflowTemplate
+    metadata:
+      {{- if $appValues.annotations }}
+      annotations:
+      {{- range $key, $value := $appValues.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+      {{- if $appValues.labels }}
+      labels:
+{{- toYaml $appValues.labels | nindent 8 }}
+      {{- end }}
+      name: {{ $appValues.name }}
+    spec:
+{{- toYaml $appValues.spec | nindent 6 }}
+{{- end }}
+{{- end }}

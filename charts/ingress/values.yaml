@@ -7,7 +7,7 @@ fullnameOverride: ""
 
 ingress:
   enabled: true
-  class: nginx
+  # class: nginx
   annotations: {}
     # kubernetes.io/tls-acme: "true"
   ## to override default dackend

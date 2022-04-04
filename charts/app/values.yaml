@@ -390,3 +390,30 @@ argo:
       #   steps:
       #     - setWeight: 20
       #     - pause: {duration: 10s}
+      # blueGreen:
+      #   activeService: devops-demo
+      #   previewService: devops-demo-preview
+      #   prePromotionAnalysis:
+      #     templates:
+      #     - templateName: app
+  analysis:
+    enabled: false
+    # # Optional
+    # name: foobar
+    # # --
+    # metrics:
+    #   - name: e2e-test
+    #     failureLimit: 0
+    #     provider:
+    #       job:
+    #         spec:
+    #           template:
+    #             spec:
+    #               containers:
+    #               - name: sleep
+    #                 image: alpine:3.12
+    #                 command: [sh, -c]
+    #                 args: [nc -vvvv devops-demo-preview 80]
+    #               restartPolicy: Never
+    #           backoffLimit: 0
+    #     count: 1

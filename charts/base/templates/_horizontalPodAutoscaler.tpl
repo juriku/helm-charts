@@ -10,7 +10,7 @@ metadata:
     {{- include "base.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    {{- if and .Values.argo.rollouts.enabled }}
+    {{- if .Values.argo.rollouts.enabled }}
     apiVersion: {{ .Values.argo.rollouts.apiVersion }}
     kind: {{ .Values.argo.rollouts.kind }}
     {{- else }}
@@ -42,7 +42,7 @@ metadata:
     {{- include "base.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    {{- if and .Values.argo.rollouts.enabled }}
+    {{- if .Values.argo.rollouts.enabled }}
     apiVersion: {{ .Values.argo.rollouts.apiVersion }}
     kind: {{ .Values.argo.rollouts.kind }}
     {{- else }}

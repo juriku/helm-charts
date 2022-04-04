@@ -2,3 +2,4 @@
 {{ include "base.secrets" . }}
 {{ include "base.backendConfigs" . }}
 {{ include "base.storageClasses" . }}
+{{ include "base.PriorityClass" . }}

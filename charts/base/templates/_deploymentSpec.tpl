@@ -152,7 +152,7 @@ env:
 {{/*
 define pod probes
 */}}
-{{- define "base.podProbes" -}}
+{{- define "base.containerProbes" -}}
 {{- with .livenessProbe }}
 livenessProbe:
 {{ toYaml . | indent 2 }}
@@ -170,7 +170,7 @@ startupProbe:
 {{/*
 define pod lifecycle
 */}}
-{{- define "base.podLifecycle" -}}
+{{- define "base.containerLifecycle" -}}
 {{- with .lifecycle }}
 lifecycle:
 {{ toYaml . | indent 2 }}
@@ -180,7 +180,7 @@ lifecycle:
 {{/*
 define pod resources
 */}}
-{{- define "base.podResources" -}}
+{{- define "base.containerResources" -}}
 {{- with .resources }}
 resources:
 {{ toYaml . | indent 2 }}
@@ -220,9 +220,18 @@ imagePullSecrets:
 {{- end }}
 
 {{/*
+define container priorityClassName
+*/}}
+{{- define "base.priorityClassName" -}}
+{{- if .priorityClassName }}
+priorityClassName: {{ .priorityClassName }}
+{{- end }}
+{{- end }}
+
+{{/*
 define pod security
 */}}
-{{- define "base.podVolumeMounts" -}}
+{{- define "base.containerVolumeMounts" -}}
 {{- with .volumeMounts }}
 volumeMounts:
 {{ toYaml . | indent 2 }}
@@ -232,7 +241,7 @@ volumeMounts:
 {{/*
 define pod command and args
 */}}
-{{- define "base.podCommand" -}}
+{{- define "base.containerCommand" -}}
 {{- with .command }}
 command:
 {{ toYaml . | indent 2 }}
@@ -258,22 +267,23 @@ automountServiceAccountToken: {{ .enabled }}
 {{/*
 define default pod properties
 */}}
-{{- define "base.podDefaultProperties" -}}
-{{- include "base.podCommand" . }}
+{{- define "base.containerDefaultProperties" -}}
+{{- include "base.containerCommand" . }}
 {{- include "base.podSecurity" . }}
 {{- include "base.environment" . }}
-{{- include "base.podProbes" . }}
-{{- include "base.podLifecycle" . }}
-{{- include "base.podResources" . }}
-{{- include "base.podVolumeMounts" . }}
+{{- include "base.containerProbes" . }}
+{{- include "base.containerLifecycle" . }}
+{{- include "base.containerResources" . }}
+{{- include "base.containerVolumeMounts" . }}
 {{- end }}
 
 {{/*
 define default container properties
 */}}
-{{- define "base.containerDefaultProperties" -}}
+{{- define "base.podDefaultProperties" -}}
 {{- include "base.imagePullSecrets" .Values }}
 {{- include "base.containerSecurity" .Values }}
 {{- include "base.NodeScheduling" . }}
 {{- include "base.serviceAccount" .Values }}
+{{- include "base.priorityClassName" .Values }}
 {{- end }}

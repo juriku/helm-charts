@@ -1,12 +1,13 @@
 apiVersion: v2
-name: cronjob
-description: A Helm chart for Kubernetes cronjob
+name: argo-applications
+description: A Helm chart for Kubernetes argo applications
 type: application
 
-version: 0.6.11
+version: 0.1.2
 
 keywords:
-  - cronjob
+  - argocd
+  - workflows
 
 maintainers:
   - name: juri
@@ -14,5 +15,5 @@ maintainers:
 
 dependencies:
   - name: base
-    version: ~0
     repository: file://../base
+    version: ~0

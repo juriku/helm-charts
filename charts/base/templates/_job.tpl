@@ -20,7 +20,7 @@ metadata:
 spec:
   template:
     spec:
-      {{- with include "base.containerDefaultProperties" $deploymentValues }}
+      {{- with include "base.podDefaultProperties" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
       {{- if $deploymentValues.Values.initContainers }}
@@ -28,7 +28,7 @@ spec:
         {{- range $containerName, $containerValues := $deploymentValues.Values.initContainers }}
         - name: {{ $containerName }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
@@ -37,13 +37,13 @@ spec:
         {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
         - name: {{ $containerName }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-          {{- with include "base.podDefaultProperties" $containerValues }}
+          {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
         - name: {{ include "base.name" $deploymentValues }}
           {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
-          {{- with include "base.podDefaultProperties" $deploymentValues.Values }}
+          {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
           {{- . | trim | nindent 10 }}
           {{- end }}
       {{- with include "base.volumes" $deploymentValues }}

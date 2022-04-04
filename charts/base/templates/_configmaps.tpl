@@ -13,6 +13,10 @@ metadata:
   {{- if . }}
   namespace: {{ . | quote }}
   {{- end }}
+  {{- if $configValuesList.annotations }}
+  annotations:
+    {{- include "base.valuesPairs" $configValuesList.annotations | trim | nindent 4 }}
+  {{- end}}
 data:
 {{- range $key, $value := $configValuesList.values }}
 {{- $valueStr := $value | toString }}

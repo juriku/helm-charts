@@ -78,7 +78,7 @@ spec:
                 {{- end }}
           {{- else }}
           - path: "/"
-            pathType: Prefix
+            pathType: {{ .pathType | default "Prefix" }}
             backend:
               service:
                 {{- if .serviceName }}
