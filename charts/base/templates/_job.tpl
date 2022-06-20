@@ -1,18 +1,10 @@
 {{- define "base.job" -}}
-{{- $root := . -}}
-{{- range $deploymentName, $deploymentValuesOverride := .Values.deployments }}
-{{- $deploymentValues := merge dict $deploymentValuesOverride $root }}
+{{- $deploymentValues := . -}}
 ---
 apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
 kind: Job
 metadata:
-{{- if eq ( $deploymentName ) "default" }}
   name: {{ include "base.fullname" $deploymentValues }}
-{{- else if $deploymentValues.fullnameOverride }}
-  name: {{ include "base.fullname" $deploymentValues }}
-{{- else }}
-  name: {{ $deploymentName }}
-{{- end }}
   {{- if $deploymentValues.Values.annotations }}
   annotations:
     {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
@@ -51,5 +43,4 @@ spec:
       {{- end }}
       restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
   backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
-{{- end }}
 {{- end }}

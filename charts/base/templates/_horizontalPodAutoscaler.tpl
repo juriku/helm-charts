@@ -1,40 +1,8 @@
 {{- define "base.horizontalPodAutoscaler" -}}
 {{- if .Values.autoscaling.enabled }}
+{{- $deploymentValues := . -}}
 ---
-{{- if or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage }}
-apiVersion: autoscaling/v2beta1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: {{ include "base.fullname" . }}
-  labels:
-    {{- include "base.labels" . | nindent 4 }}
-spec:
-  scaleTargetRef:
-    {{- if .Values.argo.rollouts.enabled }}
-    apiVersion: {{ .Values.argo.rollouts.apiVersion }}
-    kind: {{ .Values.argo.rollouts.kind }}
-    {{- else }}
-    apiVersion: {{ .Values.apiVersion | default "apps/v1" }}
-    kind: {{ .Values.kind | default "Deployment" }}
-    {{- end }}
-    name: {{ include "base.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-  metrics:
-  {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: cpu
-        targetAverageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-  {{- end }}
-  {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: memory
-        targetAverageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-  {{- end }}
-{{- else }}
-apiVersion: autoscaling/v2beta2
+apiVersion: {{ .Values.autoscaling.apiVersion | default "autoscaling/v2beta2" }}
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "base.fullname" . }}
@@ -81,6 +49,25 @@ spec:
           type: {{ .type | default "AverageValue" | quote  }}
           averageValue: {{ .AverageValue | default 100 }}
   {{- end }}
-{{- end }}
+  {{- range .Values.autoscaling.ingress_requests }}
+    - type: Object
+      object:
+        metric:
+          name: {{ .name | default "requests-per-second" }}
+        describedObject:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          name: {{ .ingress_name | default (include "base.fullname" $deploymentValues) }}
+        target:
+          type: Value
+          value: {{ .AverageValue | default "10k" }}
+  {{- end }}
+  {{- with .Values.autoscaling.metrics }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}

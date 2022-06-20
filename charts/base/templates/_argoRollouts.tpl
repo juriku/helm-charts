@@ -10,7 +10,7 @@ spec:
   {{- if .Values.autoscaling.enabled }}
   replicas: {{ .Values.autoscaling.minReplicas }}
   {{- else }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
   {{- end }}
   workloadRef:
     apiVersion: {{ .Values.apiVersion | default "apps/v1" }}

@@ -1,29 +1,9 @@
 # Default values
 
-## set number of desired replics per environment (will be overriden ih hpa is enabled (autoscaling))
-replicaCount: 1
+## set number of desired replics per environment (will be overriden if hpa is enabled (autoscaling))
+replicas: 1
 
-####
-## This section defines any additional deployments to create (will create all that are enabled)
-####
-deployments:
-  default:
-    ## enables default deployment to be installed
-    enabled: true
-  ## add additional blue deployment
-  # blue:
-  #   enabled: true
-  # green:
-  #   ## disable green deployemnt - will not deploy it
-  #   enabled: false
-  #   ## Ovveride default values (will merge values from Values section)
-  #   Values:
-  #     ## override names to avoid errors and duplications
-  #     fullnameOverride: ""
-  #     image:
-  #       tag: green
-
-## set repository in the defaults.yaml 
+## set repository in the defaults.yaml
 image:
   ## has to be passed
   # repository: ""
@@ -84,18 +64,26 @@ service:
   ## override the service name (default is release name or Values.fullnameOverride)
   # name: service-name
   ## change type to NodePort if gce ingress (ClusterIP is better for Nginx ingress)
-  type: ClusterIP
+  # type: ClusterIP
   # annotations:
   #   key: value
   # labels:
   #   key: value
   # loadBalancerIP: ""
-  # externalTrafficPolicy: Local
+  ##
+  # clusterIP: ""
+  # externalTrafficPolicy: Cluster
+  ##
   # ports:
     ## list of ports
     # http: 80
     # grpc: 8080
   ## if ports not defined, then containerPorts will be used. If none defined, then http: 80
+  ##
+  ## https://kubernetes.io/docs/concepts/services-networking/service/#externalname
+  # externalName: my.database.example.com
+  ##
+  # sessionAffinity: "ClientIP"
 
 ## by default container Ports in deployment will be taken from Values.service.ports, use containerPorts to override
 # containerPorts:
@@ -162,6 +150,23 @@ autoscaling:
   #   averageUtilization: 50
   # memory:
   # - averageUtilization: 50
+  # ingress_requests:
+  #   - name: requests-per-second
+  #     ingress_name: custom_ingress
+  #     value: 10k
+  ## other custom metrics
+  # metrics:
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: packets-per-second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: 1k
+  # apiVersion: autoscaling/v2
+  # behavior:
+  #   scaleDown:
+  #     stabilizationWindowSeconds: 300
 
 ## enable keda
 ## ref: https://keda.sh/docs/2.3/concepts/scaling-deployments/
@@ -188,7 +193,7 @@ keda:
   #     subscriptionSize: "5"
   #     subscriptionName: "audit-logs-subscription"
   #     credentialsFromEnv: "GOOGLE_APPLICATION_CREDENTIALS"
-  ## or 
+  ## or
   #   authenticationRef:
   #       name: .Release.Name
   # secretTargetRef:
@@ -199,8 +204,9 @@ keda:
 # ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
 podDisruptionBudget:
   enabled: false
-  ## default minAvailable is taken from autoscaling.minReplicas if autoscaling enabled, otherwise from replicaCount 
-  # minAvailable: ""
+  ## default minAvailable is taken from autoscaling.minReplicas if autoscaling enabled, otherwise from replicas (devided by half)
+  # minAvailable: 1
+  # maxUnavailable: 1
 
 ## ref: https://cloud.google.com/kubernetes-engine/docs/how-to/vertical-pod-autoscaling
 verticalPodAutoscaler:
@@ -320,6 +326,10 @@ ingress:
   # backend:
   #   serviceName: default-http-backend
   #   servicePort: 80
+  #   resource:
+  #     apiGroup: k8s.example.com
+  #     kind: StorageBucket
+  #     name: icon-assets
   hosts: {}
     # - host: chart-example.local
     ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
@@ -327,8 +337,14 @@ ingress:
     ## by default servicePort will be taken from Values.service.ports (http or first in the list), otherwise from containerPorts, to override add:
     #   servicePort: 8080
     # - host: chart-example-2.local
-    #   serviceName: service_name_2
-    #   servicePort: 8080
+    #   resource:
+    #     apiGroup: k8s.example.com
+    #     kind: StorageBucket
+    #     name: icon-assets
+    # - host: chart-example-2.local
+      # paths:
+      #   - path: "boo"
+      #   - path: "foo"
   tls: []
   ## tls section will be automatically generated, to override add:
   #  - secretName: chart-example-tls

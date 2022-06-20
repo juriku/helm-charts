@@ -11,15 +11,23 @@ service:
   ## override the service name (default is release name or Values.fullnameOverride)
   # name: service-name
   ## change type to NodePort if gce ingress (ClusterIP is better for Nginx ingress)
-  type: ClusterIP
+  # type: ClusterIP
   # annotations:
   #   key: value
   # labels:
   #   key: value
   # loadBalancerIP: ""
-  # externalTrafficPolicy: Local
+  ##
+  # clusterIP: ""
+  # externalTrafficPolicy: Cluster
+  ##
   # ports:
     ## list of ports
     # http: 80
     # grpc: 8080
   ## if ports not defined, then containerPorts will be used. If none defined, then http: 80
+  ##
+  ## https://kubernetes.io/docs/concepts/services-networking/service/#externalname
+  # externalName: my.database.example.com
+  ##
+  # sessionAffinity: "ClientIP"

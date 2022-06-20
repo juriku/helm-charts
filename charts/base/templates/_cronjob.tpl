@@ -1,18 +1,10 @@
 {{- define "base.cronjob" -}}
-{{- $root := . -}}
-{{- range $deploymentName, $deploymentValuesOverride := .Values.deployments }}
-{{- $deploymentValues := merge dict $deploymentValuesOverride $root }}
+{{- $deploymentValues := . -}}
 ---
 apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
 kind: CronJob
 metadata:
-{{- if eq ( $deploymentName ) "default" }}
   name: {{ include "base.fullname" $deploymentValues }}
-{{- else if $deploymentValues.fullnameOverride }}
-  name: {{ include "base.fullname" $deploymentValues }}
-{{- else }}
-  name: {{ $deploymentName }}
-{{- end }}
   {{- if $deploymentValues.Values.annotations }}
   annotations:
     {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
@@ -71,5 +63,4 @@ spec:
           {{- . | trim | nindent 10 }}
           {{- end }}
           restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
-{{- end }}
 {{- end }}

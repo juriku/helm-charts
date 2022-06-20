@@ -1,8 +1,5 @@
 {{- define "base.deployment" -}}
-{{- $root := . -}}
-{{- range $deploymentName, $deploymentValuesOverride := .Values.deployments }}
-{{- $deploymentValues := merge dict $deploymentValuesOverride $root -}}
-{{- if $deploymentValues.enabled }}
+{{- $deploymentValues := . -}}
 ---
 {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "Deployment" ) }}
 apiVersion: {{ $deploymentValues.Values.argo.rollouts.apiVersion }}
@@ -26,7 +23,7 @@ spec:
   {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "workloadRef" ) }}
   replicas: 0
   {{- else if not $deploymentValues.Values.autoscaling.enabled }}
-  replicas: {{ $deploymentValues.Values.replicaCount }}
+  replicas: {{ $deploymentValues.Values.replicas }}
   {{- end }}
   {{- if $deploymentValues.Values.argo.rollouts.enabled }}
   {{- with $deploymentValues.Values.argo.rollouts.strategy }}
@@ -121,6 +118,4 @@ spec:
       {{- with include "base.volumes" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
-{{- end }}
-{{- end }}
 {{- end }}

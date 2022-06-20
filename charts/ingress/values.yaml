@@ -14,6 +14,10 @@ ingress:
   # backend:
   #   serviceName: default-http-backend
   #   servicePort: 80
+  #   resource:
+  #     apiGroup: k8s.example.com
+  #     kind: StorageBucket
+  #     name: icon-assets
   hosts: {}
     # - host: chart-example.local
     ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
@@ -21,14 +25,21 @@ ingress:
     ## by default servicePort will be taken from Values.service.ports (http or first in the list), otherwise from containerPorts, to override add:
     #   servicePort: 8080
     # - host: chart-example-2.local
-    #   serviceName: service_name_2
-    #   servicePort: 8080
+    #   resource:
+    #     apiGroup: k8s.example.com
+    #     kind: StorageBucket
+    #     name: icon-assets
+    # - host: chart-example-2.local
+      # paths:
+      #   - path: "boo"
+      #   - path: "foo"
+
   tls: []
   ## tls section will be automatically generated, to override add:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-  
+
 ## to override default tls secret name add:
 # tls:
 #   default: default-tls-secret-name

@@ -4,7 +4,7 @@ apiVersion: v1
 kind: List
 items:
 {{- range $appValuesOrig := .Values.server.additionalApplications }}
-{{- $appValues := merge dict $appValuesOrig $appDefaults }}
+{{- $appValues := mergeOverwrite (dict) (deepCopy $appDefaults) $appValuesOrig }}
   - apiVersion: argoproj.io/v1alpha1
     kind: Application
     metadata:

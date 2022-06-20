@@ -3,7 +3,7 @@ name: ingress
 description: A Helm chart for Kubernetes ingress
 type: application
 
-version: 0.6.3
+version: 0.7.0
 
 keywords:
   - ingress
@@ -14,4 +14,5 @@ maintainers:
 
 dependencies:
   - name: base
+    version: ~0
     repository: file://../base
