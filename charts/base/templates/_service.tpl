@@ -1,4 +1,5 @@
 {{- define "base.service" -}}
+{{- if .Values.service.enabled -}}
 {{- $root := . -}}
 {{- $serviceNameOne := .Values.service.name | default (include "base.fullname" .) -}}
 {{- $serviceValuesOne := .Values.service }}
@@ -13,10 +14,10 @@ kind: Service
 metadata:
   name: {{ $serviceName }}
   labels:
-    {{- include "base.labels" $root | nindent 4 }}
-  {{- with $serviceValues.labels }}
+    {{- include "base.labels" $root | trim | nindent 4 }}
+    {{- with $serviceValues.labels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
   {{- with $serviceValues.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -41,25 +42,26 @@ spec:
   type: {{ $serviceValues.type | default "ClusterIP" }}
   ports:
   {{- if $serviceValues.ports }}
-  {{- range $key, $value := $serviceValues.ports }}
-    - port: {{ $value }}
-      targetPort: {{ $key | quote }}
-      protocol: TCP
-      name: {{ $key | quote }}
-      {{- if $serviceValues.nodePort }}
-      nodePort: {{ $serviceValues.nodePort }}
+  {{- range $i, $a := $serviceValues.ports }}
+    - port: {{ $a.port }}
+      targetPort: {{ $a.targetPort | default $a.port }}
+      protocol: {{ $a.protocol | default "TCP" }}
+      name: {{ $a.name | default (printf "http-%s" (toString $i))  }}
+      {{- if $a.nodePort }}
+      nodePort: {{ $a.nodePort }}
       {{- end }}
   {{- end }}
-  {{- else if $root.Values.containerPorts }}
-  {{- range $key, $value := $root.Values.containerPorts }}
-    - port: {{ $value }}
-      targetPort: {{ $key | quote }}
-      protocol: TCP
-      name: {{ $key | quote }}
+  {{- else if $root.Values.ports }}
+  {{- range $i, $a := $root.Values.ports }}
+    - port: {{ $a.containerPort }}
+      targetPort: {{ $a.containerPort }}
+      protocol: {{ $a.protocol | default "TCP" }}
+      name: {{ $a.name | default (printf "http-%s" (toString $i))  }}
   {{- end }}
   {{- end }}
   selector:
-    {{- include "base.selectorLabels" $root | nindent 4 }}
+    {{- include "base.selectorLabels" $root | trim | nindent 4 }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

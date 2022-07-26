@@ -1,12 +1,6 @@
-deployments:
-  default:
-    Values:
-    #   fullnameOverride: ""
-    #   nameOverride: ""
-
 image:
   # repository:
-  pullPolicy: IfNotPresent
+  # pullPolicy: IfNotPresent
   tag: "latest"
 
 # schedule: ""
@@ -19,9 +13,23 @@ backoffLimit: "0"
 # activeDeadlineSeconds: 10800
 restartPolicy: "Never"
 
+## main labels (overrides default helm labels)
+# labels:
+#   key: value
+
+## pod level labels
+# podLabels:
+#   key: value
+
+## annotation: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 annotations: {}
 
-imagePullSecrets: []
+## add extra annotations to pod metadata
+podAnnotations: {}
+
+## secret name for dockerconfigjson secret
+# imagePullSecrets:
+#   - name: image-pull-secret
 
 podSecurityContext: {}
 
@@ -31,40 +39,35 @@ resources: {}
 
 nodeSelector: {}
 
-# if no nodeSelector defined
-nodeSelectorDefault: {}
-
 tolerations: []
 
 affinity: {}
 
 ## simple way to add variables
-environment:
-  metadata: {}
-  variables: {}
-  secretVariables: {}
-  configmapVariables: {}
 # environment:
 #   variables:
 #     SERVER_PORT: "3000"
 #     NODE_ENV: "staging"
 #   secretVariables:
 #     VAR_NAME_IN_CONTAINER:
-#       secretName: secret_name
-#       dataKeyRef: SECRET_KEY_REFERENCE_NAME
+#       name: secret_name
+#       key: SECRET_KEY_REFERENCE_NAME
 #   configmapVariables:
 #     VAR_NAME_IN_CONTAINER:
-#       configmapName: configmap_name
-#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME
+#       name: configmap_name
+#       key: CONFIGMAP_KEY_REFERENCE_NAME
 #     VAR_NAME_IN_CONTAINER_2:
-#       configmapName: configmap_name
-#       dataKeyRef: CONFIGMAP_KEY_REFERENCE_NAME_2
+#       name: configmap_name
+#       key: CONFIGMAP_KEY_REFERENCE_NAME_2
 ## with metadata you can get info, lipe pod name, namespace, ip intot he variable. ref: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/
 #   metadata:
 #     POD_NAME: metadata.name
 ## load env vars from configmap
 #   envFromConfigMaps:
 #     - shared-config
+## load env vars from secrets
+#   envFromSecrets:
+#     - shared-secret
 
 # extraContainers:
 #   container-name:
@@ -109,9 +112,9 @@ environment:
 #     defaultMode: 420
 #     secretName: secret-name
 # volumes:
-#   - name: sa-firebase-labelling-tool
+#   - name: volume-name
 #     secret:
-#       secretName: sa-firebase-labelling-tool
+#       secretName: volume-name
 #       items:
 #       - key: service.json
 #         path: service.json
@@ -119,5 +122,11 @@ environment:
 # volumeMounts:
 #   - mountPath: /src/service.json
 #       subPath: service.json
-#     name: sa-firebase-labelling-tool
+#     name: volume-name
 #     readOnly: true
+
+## specify service account
+# serviceAccountName: sa-name
+
+## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server
+## automountServiceAccountToken: false

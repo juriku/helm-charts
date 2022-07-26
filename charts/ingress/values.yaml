@@ -22,7 +22,7 @@ ingress:
     # - host: chart-example.local
     ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
     #   serviceName: service_name
-    ## by default servicePort will be taken from Values.service.ports (http or first in the list), otherwise from containerPorts, to override add:
+    ## by default servicePort will be taken from Values.service.ports (http or first in the list), otherwise from .Values.ports, to override add:
     #   servicePort: 8080
     # - host: chart-example-2.local
     #   resource:

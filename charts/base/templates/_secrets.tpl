@@ -1,5 +1,6 @@
 {{- define "base.secrets" -}}
 {{- if .Values.secrets }}
+{{- $root := . -}}
 {{- $defaultNamespaces := .Values.defaultNamespaces }}
 {{- range $encodeMode, $secretValuesList := .Values.secrets }}
 {{- range $secretValuesList }}
@@ -10,12 +11,14 @@
 ---
 apiVersion: v1
 kind: Secret
-type: {{ $secretValues.type | default "Opaque"}}
+type: {{ $secretValues.type | default "Opaque" }}
 metadata:
   name: {{ $secretValues.name | quote }}
   {{- if . }}
   namespace: {{ . | quote }}
   {{- end }}
+  labels:
+    {{- include "base.commonLabels" $root | trim | nindent 4 }}
 data:
 {{- range $key, $value := $secretValues.values }}
   {{- if eq $encodeMode "decoded" }}

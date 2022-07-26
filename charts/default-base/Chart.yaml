@@ -2,7 +2,7 @@ apiVersion: v2
 name: default-base
 description: A Helm chart for Kubernetes - default-base for namespaces
 
-version: 0.7.0
+version: 0.9.1
 
 keywords:
   - BackendConfig
@@ -11,6 +11,7 @@ keywords:
   - secret
   - tls
   - dockerconfigjson
+  - rbac
 
 maintainers:
   - name: juri

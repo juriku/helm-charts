@@ -1,3 +1,4 @@
 {{ include "base.configmaps" . }}
 {{ include "base.secrets" . }}
 {{ include "base.cronjob" . }}
+{{ include "base.rbac" . }}

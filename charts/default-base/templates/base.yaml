@@ -3,3 +3,4 @@
 {{ include "base.backendConfigs" . }}
 {{ include "base.storageClasses" . }}
 {{ include "base.PriorityClass" . }}
+{{ include "base.rbac" . }}

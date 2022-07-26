@@ -7,7 +7,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "base.fullname" . }}
   labels:
-    {{- include "base.labels" . | nindent 4 }}
+    {{- include "base.labels" . | trim | nindent 4 }}
 spec:
   scaleTargetRef:
     {{- if .Values.argo.rollouts.enabled }}

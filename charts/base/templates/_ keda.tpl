@@ -1,11 +1,12 @@
 {{- define "base.keda" -}}
 {{- if .Values.keda.enabled }}
-{{- $root := . -}}
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ include "base.fullname" . }}
+  labels:
+    {{- include "base.labels" . | trim | nindent 4 }}
 spec:
   scaleTargetRef:
     {{- if and .Values.argo.rollouts.enabled }}
@@ -37,6 +38,8 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: {{ include "base.fullname" . }}
+  labels:
+    {{- include "base.labels" . | trim | nindent 4 }}
 spec:
   secretTargetRef:
   {{- range .Values.keda.secretTargetRef }}

@@ -27,16 +27,36 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+labels
 */}}
 {{- define "base.labels" -}}
-{{- include "base.selectorLabels" . }}
-app.kubernetes.io/name: {{ include "base.name" . }}
+{{- $commonValues := include "base.commonLabels" . | trim | fromYaml -}}
+{{- $selectorLabels := include "base.selectorLabels" . | trim | fromYaml -}}
+{{- $allLabels := mustMerge $selectorLabels $commonValues -}}
+{{- range $key, $value := $allLabels }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "base.commonLabels" -}}
+{{- if .Values.labels }}
+{{- range $key, $value := .Values.labels }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- else }}
 helm.sh/chart: {{ include "base.chart" . }}
+app.kubernetes.io/name: {{ include "base.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- else }}
+app.kubernetes.io/version: {{ .Values.image.tag | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -44,33 +64,11 @@ Selector labels
 */}}
 {{- define "base.selectorLabels" -}}
 {{- if .Values.selectorLabels }}
-{{- range $key, $value := .Values.selectorLabels -}}
+{{- range $key, $value := .Values.selectorLabels }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
-{{- else -}}
+{{- else }}
 app: {{ include "base.fullname" . }}
-{{- end }}
-{{- end }}
-
-{{/*
-service port default
-*/}}
-{{- define "base.servicePortDefault" -}}
-{{- $serviceValues := .Values.service | default dict -}}
-{{- if $serviceValues.ports }}
-{{- if .Values.service.ports.http }}
-{{- printf "http" }}
-{{- else }}
-{{- keys .Values.service.ports | first }}
-{{- end }}
-{{- else if .Values.containerPorts }}
-{{- if .Values.containerPorts.http }}
-{{- printf "http" }}
-{{- else }}
-{{- keys .Values.containerPorts | first }}
-{{- end }}
-{{- else }}
-{{- printf "http" }}
 {{- end }}
 {{- end }}
 
@@ -80,16 +78,12 @@ service port default
 {{- define "base.servicePortDefaultNum" -}}
 {{- $serviceValues := .Values.service | default dict -}}
 {{- if $serviceValues.ports }}
-{{- if .Values.service.ports.http }}
-{{- .Values.service.ports.http }}
-{{- else }}
-{{- values .Values.service.ports | first }}
+{{- with (index $serviceValues.ports 0) }}
+{{- .port }}
 {{- end }}
-{{- else if .Values.containerPorts }}
-{{- if .Values.containerPorts.http }}
-{{- .Values.containerPorts.http }}
-{{- else }}
-{{- values .Values.containerPorts | first }}
+{{- else if .Values.ports }}
+{{- with (index .Values.ports 0) }}
+{{- .containerPort }}
 {{- end }}
 {{- else }}
 {{- printf "80" }}

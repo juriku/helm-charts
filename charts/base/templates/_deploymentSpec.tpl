@@ -3,10 +3,14 @@ define container image
 */}}
 {{- define "base.image" -}}
 image: "{{ .repository }}:{{ .tag | toString }}"
-{{- if regexMatch "[0-9]" ( .tag | toString ) }}
+{{- if .pullPolicy }}
 imagePullPolicy: {{ .pullPolicy }}
 {{- else }}
-imagePullPolicy: "Always"
+{{- if regexMatch "[0-9]" ( .tag | toString ) }}
+imagePullPolicy: IfNotPresent
+{{- else }}
+imagePullPolicy: Always
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -39,7 +43,6 @@ volumes:
 {{- end }}
 {{- end }}
 
-
 {{/*
 pod affinity
 */}}
@@ -58,7 +61,7 @@ affinity:
     {{- range $key, $value := $podAntiAffinity.topology }}
     - labelSelector:
         matchExpressions:
-        {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | toString | fromYaml }}
+        {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | trim | toString | fromYaml }}
         - key: {{ $key }}
           operator: In
           values:
@@ -73,7 +76,7 @@ affinity:
       podAffinityTerm:
         labelSelector:
           matchExpressions:
-          {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | toString | fromYaml }}
+          {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | trim | toString | fromYaml }}
           - key: {{ $key }}
             operator: In
             values:
@@ -91,12 +94,9 @@ deployemnt Node Scheduling
 */}}
 {{- define "base.NodeScheduling" -}}
 {{- include "base.affinity" . }}
-{{- if .Values.nodeSelector }}
+{{- with .Values.nodeSelector }}
 nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 2 }}
-{{- else if .Values.nodeSelectorDefault }}
-nodeSelector:
-{{ toYaml .Values.nodeSelectorDefault | indent 2 }}
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- with .Values.tolerations }}
 tolerations:
@@ -131,15 +131,15 @@ env:
   - name: {{ $variableName }}
     valueFrom:
       secretKeyRef:
-        name: {{ $opts.secretName }}
-        key: {{ $opts.dataKeyRef }}
+        name: {{ $opts.name }}
+        key: {{ $opts.key }}
 {{- end }}
 {{- range $variableName, $opts := .environment.configmapVariables }}
   - name: {{ $variableName }}
     valueFrom:
       configMapKeyRef:
-        name: {{ $opts.configmapName }}
-        key: {{ $opts.dataKeyRef }}
+        name: {{ $opts.name }}
+        key: {{ $opts.key }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
 {{- $valueStr := $value | toString }}
@@ -188,9 +188,9 @@ resources:
 {{- end }}
 
 {{/*
-define pod security
+define container securityContext
 */}}
-{{- define "base.podSecurity" -}}
+{{- define "base.containerSecurityContext" -}}
 {{- with .securityContext }}
 securityContext:
 {{ toYaml . | indent 2 }}
@@ -198,9 +198,9 @@ securityContext:
 {{- end }}
 
 {{/*
-define container security
+define pod securityContext
 */}}
-{{- define "base.containerSecurity" -}}
+{{- define "base.podSecurityContext" -}}
 {{- with .podSecurityContext }}
 securityContext:
 {{ toYaml . | indent 2 }}
@@ -211,11 +211,9 @@ securityContext:
 define container security
 */}}
 {{- define "base.imagePullSecrets" -}}
-{{- if .imagePullSecrets }}
+{{- with .imagePullSecrets }}
 imagePullSecrets:
-{{- range .imagePullSecrets }}
-  - name: {{ . }}
-{{- end }}
+{{ toYaml . | indent 2 }}
 {{- end }}
 {{- end }}
 
@@ -259,8 +257,8 @@ define pod service account
 {{- if .serviceAccountName }}
 serviceAccountName: {{ .serviceAccountName }}
 {{- end }}
-{{- with .automountServiceAccountToken }}
-automountServiceAccountToken: {{ .enabled }}
+{{- if hasKey . "automountServiceAccountToken" }}
+automountServiceAccountToken: {{ .automountServiceAccountToken }}
 {{- end }}
 {{- end }}
 
@@ -269,7 +267,7 @@ define default pod properties
 */}}
 {{- define "base.containerDefaultProperties" -}}
 {{- include "base.containerCommand" . }}
-{{- include "base.podSecurity" . }}
+{{- include "base.containerSecurityContext" . }}
 {{- include "base.environment" . }}
 {{- include "base.containerProbes" . }}
 {{- include "base.containerLifecycle" . }}
@@ -282,7 +280,7 @@ define default container properties
 */}}
 {{- define "base.podDefaultProperties" -}}
 {{- include "base.imagePullSecrets" .Values }}
-{{- include "base.containerSecurity" .Values }}
+{{- include "base.podSecurityContext" .Values }}
 {{- include "base.NodeScheduling" . }}
 {{- include "base.serviceAccount" .Values }}
 {{- include "base.priorityClassName" .Values }}

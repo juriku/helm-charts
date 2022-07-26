@@ -1,7 +1,7 @@
 {{- define "base.ingress" -}}
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "base.fullname" . -}}
-{{- $svcPort := include "base.servicePortDefault" . -}}
+{{- $svcPort := include "base.servicePortDefaultNum" . -}}
 {{- $serviceValues := .Values.service | default dict -}}
 {{- $svcName := $serviceValues.name | default $fullName -}}
 ---
@@ -10,7 +10,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "base.labels" . | nindent 4 }}
+    {{- include "base.commonLabels" . | trim | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -92,7 +92,7 @@ spec:
                   name: {{ $hostValues.servicePort }}
                   {{- end }}
                   {{- else }}
-                  name: {{ $svcPort }}
+                  number: {{ $svcPort }}
                   {{- end }}
                 {{- end }}
           {{- end }}

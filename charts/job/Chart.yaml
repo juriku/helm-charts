@@ -3,10 +3,10 @@ name: job
 description: A Helm chart for Kubernetes job
 type: application
 
-version: 0.7.0
+version: 0.9.1
 
 keywords:
-  - cronjob
+  - job
 
 maintainers:
   - name: juri

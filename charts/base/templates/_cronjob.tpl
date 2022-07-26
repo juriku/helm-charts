@@ -5,6 +5,8 @@ apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
 kind: CronJob
 metadata:
   name: {{ include "base.fullname" $deploymentValues }}
+  labels:
+    {{- include "base.commonLabels" $deploymentValues | trim | nindent 4 }}
   {{- if $deploymentValues.Values.annotations }}
   annotations:
     {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
@@ -29,6 +31,17 @@ spec:
       backoffLimit: {{ $deploymentValues.Values.backoffLimit }}
       {{- end }}
       template:
+        {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
+        metadata:
+          {{- if $deploymentValues.Values.podAnnotations }}
+          annotations:
+            {{- include "base.valuesPairs" $deploymentValues.Values.podAnnotations | trim | nindent 12 }}
+          {{- end }}
+          {{- with $deploymentValues.Values.podLabels }}
+          labels:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
         spec:
           {{- with include "base.podDefaultProperties" $deploymentValues }}
           {{- . | trim | nindent 10 }}

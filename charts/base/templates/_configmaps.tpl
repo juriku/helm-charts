@@ -1,5 +1,6 @@
 {{- define "base.configmaps" -}}
 {{- if .Values.configmaps }}
+{{- $root := . -}}
 {{- $defaultNamespaces := .Values.defaultNamespaces }}
 {{- range $configValuesList := .Values.configmaps }}
 {{- $rangeNamespaces := coalesce $configValuesList.namespaces (list $configValuesList.namespace) (list) }}
@@ -13,6 +14,8 @@ metadata:
   {{- if . }}
   namespace: {{ . | quote }}
   {{- end }}
+  labels:
+    {{- include "base.commonLabels" $root | trim | nindent 4 }}
   {{- if $configValuesList.annotations }}
   annotations:
     {{- include "base.valuesPairs" $configValuesList.annotations | trim | nindent 4 }}

@@ -11,7 +11,7 @@ kind: {{ $deploymentValues.Values.kind | default "Deployment" }}
 metadata:
   name: {{ include "base.fullname" $deploymentValues }}
   labels:
-    {{- include "base.labels" $deploymentValues | nindent 4 }}
+    {{- include "base.labels" $deploymentValues | trim | nindent 4 }}
     {{- with $deploymentValues.Values.labelsDeployment }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -44,7 +44,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "base.selectorLabels" $deploymentValues | nindent 6 }}
+      {{- include "base.selectorLabels" $deploymentValues | trim | nindent 6 }}
   template:
     metadata:
       {{- if or $deploymentValues.Values.prometheusScrape $deploymentValues.Values.podAnnotations }}
@@ -54,10 +54,15 @@ spec:
         prometheus.io/port: {{ $deploymentValues.Values.prometheusScrapePort | quote }}
         prometheus.io/scrape: "true"
         {{- end }}
+        {{- if $deploymentValues.Values.podAnnotations }}
         {{- include "base.valuesPairs" $deploymentValues.Values.podAnnotations | trim | nindent 8 }}
+        {{- end }}
       {{- end }}
       labels:
-        {{- include "base.selectorLabels" $deploymentValues | nindent 8 }}
+        {{- with $deploymentValues.Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "base.selectorLabels" $deploymentValues | trim | nindent 8 }}
     spec:
       {{- with include "base.podDefaultProperties" $deploymentValues }}
       {{- . | trim | nindent 6 }}
@@ -67,11 +72,9 @@ spec:
         {{- range $containerName, $containerValues := $deploymentValues.Values.initContainers }}
         - name: {{ $containerName }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-          {{- range $key, $value := $containerValues.containerPorts }}
+          {{- with $containerValues.ports }}
           ports:
-            - name: {{ $key | quote }}
-              containerPort: {{ $value }}
-              protocol: TCP
+            {{- . | trim | nindent 12 }}
           {{- end }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
@@ -82,11 +85,9 @@ spec:
         {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
         - name: {{ $containerName }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
-          {{- range $key, $value := $containerValues.containerPorts }}
+          {{- with $containerValues.ports }}
           ports:
-            - name: {{ $key | quote }}
-              containerPort: {{ $value }}
-              protocol: TCP
+            {{- . | trim | nindent 12 }}
           {{- end }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
@@ -94,20 +95,9 @@ spec:
         {{- end }}
         - name: {{ include "base.name" $deploymentValues }}
           {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
-          {{- if $deploymentValues.Values.containerPorts }}
+          {{- with $deploymentValues.Values.ports }}
           ports:
-          {{- range $key, $value := $deploymentValues.Values.containerPorts }}
-            - name: {{ $key | quote }}
-              containerPort: {{ $value }}
-              protocol: TCP
-          {{- end }}
-          {{- else if $deploymentValues.Values.service.ports }}
-          ports:
-          {{- range $key, $value := $deploymentValues.Values.service.ports }}
-            - name: {{ $key | quote }}
-              containerPort: {{ $value }}
-              protocol: TCP
-          {{- end }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
           {{- . | trim | nindent 10 }}

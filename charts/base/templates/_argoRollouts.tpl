@@ -6,6 +6,8 @@ apiVersion: {{ .Values.argo.rollouts.apiVersion }}
 kind: {{ .Values.argo.rollouts.kind }}
 metadata:
   name: {{ include "base.fullname" . }}
+  labels:
+    {{- include "base.labels" . | trim | nindent 4 }}
 spec:
   {{- if .Values.autoscaling.enabled }}
   replicas: {{ .Values.autoscaling.minReplicas }}

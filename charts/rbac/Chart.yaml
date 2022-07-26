@@ -3,11 +3,12 @@ name: rbac
 description: A Helm chart for Kubernetes rbac
 type: application
 
-version: 0.1.0
+version: 0.9.1
 
 keywords:
   - rbac
 
-maintainers:
-  - name: juri
-    url: https://github.com/juriku/helm-charts
+dependencies:
+  - name: base
+    version: ~0
+    repository: file://../base

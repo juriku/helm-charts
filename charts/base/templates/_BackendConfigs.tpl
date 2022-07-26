@@ -1,11 +1,14 @@
 {{- define "base.backendConfigs" -}}
 {{- if .Values.backendConfigs }}
+{{- $root := . -}}
 {{- range .Values.backendConfigs }}
 ---
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   name: {{ .name }}
+  labels:
+    {{- include "base.labels" $root | trim | nindent 4 }}
 spec:
 {{- if .iap }}
   iap:

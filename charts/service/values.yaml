@@ -22,10 +22,12 @@ service:
   # externalTrafficPolicy: Cluster
   ##
   # ports:
-    ## list of ports
-    # http: 80
-    # grpc: 8080
-  ## if ports not defined, then containerPorts will be used. If none defined, then http: 80
+    # - port: 8080
+    #   targetPort: 9090 # default .port
+    #   protocol: "" # default "TCP"
+    #   name: net # default "http-Index"
+    #   nodePort: # not needed
+  ## if ports not defined, then .Values.ports will be used.
   ##
   ## https://kubernetes.io/docs/concepts/services-networking/service/#externalname
   # externalName: my.database.example.com

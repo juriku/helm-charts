@@ -6,6 +6,8 @@ apiVersion: {{ .Values.podDisruptionBudget.apiVersion | default "policy/v1" }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ include "base.fullname" . }}
+  labels:
+    {{- include "base.labels" . | trim | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
@@ -19,6 +21,6 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "base.selectorLabels" . | nindent 6 }}
+      {{- include "base.selectorLabels" . | trim | nindent 6 }}
 {{- end }}
 {{- end }}
