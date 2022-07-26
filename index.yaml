@@ -2,6 +2,34 @@ apiVersion: v1
 entries:
   app:
   - apiVersion: v2
+    created: "2022-07-26T15:36:15.916863886Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes Deployment
+    digest: a176da84cc09be370112d214b0cb4553146157ff8507e5c45a5ba296f7d923a7
+    keywords:
+    - deployment
+    - configmap
+    - secret
+    - HorizontalPodAutoscaler
+    - hpa
+    - VerticalPodAutoscaler
+    - podDisruptionBudget
+    - service
+    - ingress
+    - analysisTemplate
+    - rbac
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: app
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/app-0.9.1/app-0.9.1.tgz
+    version: 0.9.1
+  - apiVersion: v2
     created: "2022-06-20T20:53:23.6496726Z"
     dependencies:
     - name: base
@@ -287,6 +315,29 @@ entries:
     - https://github.com/juriku/helm-charts/releases/download/argo-workflows-0.1.1/argo-workflows-0.1.1.tgz
     version: 0.1.1
   base:
+  - apiVersion: v2
+    created: "2022-07-26T15:36:16.029033544Z"
+    description: A Helm chart for Kubernetes with helm named templates
+    digest: 8a3c599770add77f61733a475024b3e3776d23ff7d3c9b6da7f7219071094f36
+    keywords:
+    - deployment
+    - configmap
+    - secret
+    - HorizontalPodAutoscaler
+    - hpa
+    - VerticalPodAutoscaler
+    - podDisruptionBudget
+    - service
+    - ingress
+    - storageClass
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: base
+    type: library
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/base-0.9.1/base-0.9.1.tgz
+    version: 0.9.1
   - apiVersion: v2
     created: "2022-06-20T20:53:24.212578098Z"
     description: A Helm chart for Kubernetes with helm named templates
@@ -606,6 +657,24 @@ entries:
     version: 0.1.0
   cronjob:
   - apiVersion: v2
+    created: "2022-07-26T15:36:16.146964142Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes cronjob
+    digest: 89c0aad86f299d38f3886d6f1cc991e901381bf63248c060eac86e24ab412d3a
+    keywords:
+    - cronjob
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: cronjob
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/cronjob-0.9.1/cronjob-0.9.1.tgz
+    version: 0.9.1
+  - apiVersion: v2
     created: "2022-06-20T20:53:24.465199642Z"
     dependencies:
     - name: base
@@ -727,6 +796,29 @@ entries:
     - https://github.com/juriku/helm-charts/releases/download/cronjob-0.2.1/cronjob-0.2.1.tgz
     version: 0.2.1
   default-base:
+  - apiVersion: v2
+    created: "2022-07-26T15:36:16.301757488Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes - default-base for namespaces
+    digest: b1d6429e60d13c67532448eaea73dcba94cbc94576be2f1bf890654f9563d67c
+    keywords:
+    - BackendConfig
+    - StorageClass
+    - configmap
+    - secret
+    - tls
+    - dockerconfigjson
+    - rbac
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: default-base
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/default-base-0.9.1/default-base-0.9.1.tgz
+    version: 0.9.1
   - apiVersion: v2
     created: "2022-06-20T20:53:24.718280689Z"
     dependencies:
@@ -877,6 +969,24 @@ entries:
     version: 0.3.1
   ingress:
   - apiVersion: v2
+    created: "2022-07-26T15:36:16.412359436Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes ingress
+    digest: 8a461b66627cb2f44db26f88ba3d7577948f981ab448fb233bc3fe7672161735
+    keywords:
+    - ingress
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: ingress
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/ingress-0.9.1/ingress-0.9.1.tgz
+    version: 0.9.1
+  - apiVersion: v2
     created: "2022-06-20T20:53:24.960270138Z"
     dependencies:
     - name: base
@@ -1026,6 +1136,24 @@ entries:
     version: 0.1.0
   job:
   - apiVersion: v2
+    created: "2022-07-26T15:36:16.554979Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes job
+    digest: 45c173e61a144c34e980b3bb1d25e32dd3dd04f9945b9d28b49386167a104a4e
+    keywords:
+    - job
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: job
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/job-0.9.1/job-0.9.1.tgz
+    version: 0.9.1
+  - apiVersion: v2
     created: "2022-06-20T20:53:25.207350432Z"
     dependencies:
     - name: base
@@ -1130,6 +1258,21 @@ entries:
     version: 0.2.1
   rbac:
   - apiVersion: v2
+    created: "2022-07-26T15:36:16.693633037Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes rbac
+    digest: d2265ebd6a39d934e8a32953bbd4962a50a57ad882eb2571b159c96b89d09e00
+    keywords:
+    - rbac
+    name: rbac
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/rbac-0.9.1/rbac-0.9.1.tgz
+    version: 0.9.1
+  - apiVersion: v2
     created: "2022-04-04T12:39:55.949509845Z"
     description: A Helm chart for Kubernetes rbac
     digest: d40906af8c207fd64e8d9794193243583ba4443aec5dffcef3e9a820ddedde02
@@ -1144,6 +1287,24 @@ entries:
     - https://github.com/juriku/helm-charts/releases/download/rbac-0.1.0/rbac-0.1.0.tgz
     version: 0.1.0
   service:
+  - apiVersion: v2
+    created: "2022-07-26T15:36:16.84050223Z"
+    dependencies:
+    - name: base
+      repository: file://../base
+      version: ~0
+    description: A Helm chart for Kubernetes service
+    digest: bf90141ccc2ad2fe84d743dc45e671f3e74527979d71f6e8a951ff8b6fd63569
+    keywords:
+    - service
+    maintainers:
+    - name: juri
+      url: https://github.com/juriku/helm-charts
+    name: service
+    type: application
+    urls:
+    - https://github.com/juriku/helm-charts/releases/download/service-0.9.1/service-0.9.1.tgz
+    version: 0.9.1
   - apiVersion: v2
     created: "2022-06-20T20:53:25.467931545Z"
     dependencies:
@@ -1265,4 +1426,4 @@ entries:
     urls:
     - https://github.com/juriku/helm-charts/releases/download/service-0.2.0/service-0.2.0.tgz
     version: 0.2.0
-generated: "2022-06-20T20:53:25.468686352Z"
+generated: "2022-07-26T15:36:16.840824933Z"
