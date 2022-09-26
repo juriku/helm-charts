@@ -74,7 +74,7 @@ spec:
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
           {{- with $containerValues.ports }}
           ports:
-            {{- . | trim | nindent 12 }}
+            {{- toYaml . | trim | nindent 12 }}
           {{- end }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
@@ -87,7 +87,7 @@ spec:
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
           {{- with $containerValues.ports }}
           ports:
-            {{- . | trim | nindent 12 }}
+            {{- toYaml . | trim | nindent 12 }}
           {{- end }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}

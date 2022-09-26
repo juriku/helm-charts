@@ -1,0 +1,22 @@
+
+## main labels (overrides default helm labels)
+# labels:
+#   key: value
+
+# additionalPrometheusRules: []
+#  - name: my-rule-file
+#    groups:
+#      - name: my_group
+#        rules:
+#        - record: my_record
+#          expr: 100 * my_record
+
+## Provide custom recording or alerting rules to be deployed into the cluster.
+##
+additionalPrometheusRulesMap: {}
+#  rule-name:
+#    groups:
+#    - name: my_group
+#      rules:
+#      - record: my_record
+#        expr: 100 * my_record

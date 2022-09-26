@@ -14,7 +14,7 @@ spec:
   {{- else if and $autoscaling.enabled $autoscaling.minReplicas }}
   minAvailable: {{ if (lt (int $autoscaling.minReplicas) 2) }}1{{else}}{{ div $autoscaling.minReplicas 2 }}{{end}}
   {{- else }}
-  minAvailable: {{ if (lt (int .Values.replicas) 2) }}1{{else}}{{ div.Values.replicas 2 }}{{end}}
+  minAvailable: {{ if (lt (int .Values.replicas) 2) }}1{{else}}{{ div .Values.replicas 2 }}{{end}}
   {{- end }}
   {{- if .Values.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}

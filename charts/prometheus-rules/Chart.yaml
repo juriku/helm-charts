@@ -1,12 +1,12 @@
 apiVersion: v2
-name: service
-description: A Helm chart for Kubernetes service
+name: prometheus-rules
+description: A Helm chart for Prometheus Rules
 type: application
 
 version: 0.9.5
 
 keywords:
-  - service
+  - job
 
 maintainers:
   - name: juri
