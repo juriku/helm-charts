@@ -12,6 +12,10 @@ metadata:
     {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
   {{- end }}
 spec:
+  {{- if $deploymentValues.Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ $deploymentValues.Values.ttlSecondsAfterFinished }}
+  {{- end }}
+  backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
   template:
     {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
     metadata:
@@ -25,6 +29,7 @@ spec:
       {{- end }}
     {{- end }}
     spec:
+      restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
       {{- with include "base.podDefaultProperties" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
@@ -54,6 +59,4 @@ spec:
       {{- with include "base.volumes" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
-      restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
-  backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
 {{- end }}

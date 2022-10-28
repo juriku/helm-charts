@@ -1,1 +1,4 @@
 {{ include "base.ingress" . }}
+{{ include "base.configmaps" . }}
+{{ include "base.secrets" . }}
+{{ include "base.rbac" . }}

@@ -30,6 +30,9 @@ spec:
       {{- if $deploymentValues.Values.backoffLimit }}
       backoffLimit: {{ $deploymentValues.Values.backoffLimit }}
       {{- end }}
+      {{- if $deploymentValues.Values.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ $deploymentValues.Values.ttlSecondsAfterFinished }}
+      {{- end }}
       template:
         {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
         metadata:

@@ -47,6 +47,8 @@ restartPolicy: "Never"
 
 backoffLimit: 1
 
+# ttlSecondsAfterFinished: 3600
+
 ## simple way to add variables
 # environment:
 #   variables:

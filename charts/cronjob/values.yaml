@@ -11,6 +11,7 @@ failedJobsHistoryLimit: 3
 successfulJobsHistoryLimit: 3
 backoffLimit: "0"
 # activeDeadlineSeconds: 10800
+# ttlSecondsAfterFinished: 3600
 restartPolicy: "Never"
 
 ## main labels (overrides default helm labels)
