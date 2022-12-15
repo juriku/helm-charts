@@ -25,6 +25,9 @@ spec:
   startingDeadlineSeconds: {{ $deploymentValues.Values.startingDeadlineSeconds }}
   {{- end }}
   schedule: {{ $deploymentValues.Values.schedule | quote }}
+  {{- if $deploymentValues.Values.suspend }}
+  suspend: {{ $deploymentValues.Values.suspend }}
+  {{- end }}
   jobTemplate:
     spec:
       {{- if $deploymentValues.Values.backoffLimit }}
@@ -32,6 +35,9 @@ spec:
       {{- end }}
       {{- if $deploymentValues.Values.ttlSecondsAfterFinished }}
       ttlSecondsAfterFinished: {{ $deploymentValues.Values.ttlSecondsAfterFinished }}
+      {{- end }}
+      {{- if $deploymentValues.Values.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ $deploymentValues.Values.activeDeadlineSeconds }}
       {{- end }}
       template:
         {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
@@ -49,8 +55,8 @@ spec:
           {{- with include "base.podDefaultProperties" $deploymentValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
-          {{- if $deploymentValues.Values.activeDeadlineSeconds }}
-          activeDeadlineSeconds: {{ $deploymentValues.Values.activeDeadlineSeconds }}
+          {{- if $deploymentValues.Values.podActiveDeadlineSeconds }}
+          activeDeadlineSeconds: {{ $deploymentValues.Values.podActiveDeadlineSeconds }}
           {{- end }}
           {{- if $deploymentValues.Values.initContainers }}
           initContainers:

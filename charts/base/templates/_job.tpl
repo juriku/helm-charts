@@ -15,6 +15,15 @@ spec:
   {{- if $deploymentValues.Values.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ $deploymentValues.Values.ttlSecondsAfterFinished }}
   {{- end }}
+  {{- if $deploymentValues.Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ $deploymentValues.Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- if $deploymentValues.Values.completions }}
+  completions: {{ $deploymentValues.Values.completions }}
+  {{- end }}
+  {{- if $deploymentValues.Values.parallelism }}
+  parallelism: {{ $deploymentValues.Values.parallelism }}
+  {{- end }}
   backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
   template:
     {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
@@ -59,4 +68,8 @@ spec:
       {{- with include "base.volumes" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
+  {{- with $deploymentValues.Values.podFailurePolicy }}
+  podFailurePolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
