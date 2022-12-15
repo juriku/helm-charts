@@ -54,6 +54,7 @@ backoffLimit: 1
 # ttlSecondsAfterFinished: 3600
 
 # activeDeadlineSeconds: 10800
+# podActiveDeadlineSeconds: 10000
 
 # podFailurePolicy:
 #   rules:

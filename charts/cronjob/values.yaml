@@ -14,7 +14,20 @@ backoffLimit: "0"
 # podActiveDeadlineSeconds: 10000
 # ttlSecondsAfterFinished: 3600
 restartPolicy: "Never"
+# completions: 12
+# parallelism: 3
 # suspend: "true"
+
+# podFailurePolicy:
+#   rules:
+#   - action: FailJob
+#     onExitCodes:
+#       containerName: main      # optional
+#       operator: In             # one of: In, NotIn
+#       values: [42]
+#   - action: Ignore             # one of: Ignore, FailJob, Count
+#     onPodConditions:
+#     - type: DisruptionTarget   # indicates Pod disruption
 
 ## main labels (overrides default helm labels)
 # labels:

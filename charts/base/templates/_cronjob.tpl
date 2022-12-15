@@ -39,6 +39,12 @@ spec:
       {{- if $deploymentValues.Values.activeDeadlineSeconds }}
       activeDeadlineSeconds: {{ $deploymentValues.Values.activeDeadlineSeconds }}
       {{- end }}
+      {{- if $deploymentValues.Values.completions }}
+      completions: {{ $deploymentValues.Values.completions }}
+      {{- end }}
+      {{- if $deploymentValues.Values.parallelism }}
+      parallelism: {{ $deploymentValues.Values.parallelism }}
+      {{- end }}
       template:
         {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
         metadata:
@@ -85,4 +91,8 @@ spec:
           {{- . | trim | nindent 10 }}
           {{- end }}
           restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
+      {{- with $deploymentValues.Values.podFailurePolicy }}
+      podFailurePolicy:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

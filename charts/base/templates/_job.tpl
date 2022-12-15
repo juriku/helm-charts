@@ -39,6 +39,9 @@ spec:
     {{- end }}
     spec:
       restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
+      {{- if $deploymentValues.Values.podActiveDeadlineSeconds }}
+      activeDeadlineSeconds: {{ $deploymentValues.Values.podActiveDeadlineSeconds }}
+      {{- end }}
       {{- with include "base.podDefaultProperties" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
