@@ -2,11 +2,12 @@ apiVersion: v2
 name: default-base
 description: A Helm chart for Kubernetes - default-base for namespaces
 
-version: 0.9.5
+version: 0.10.5
 
 keywords:
   - BackendConfig
   - StorageClass
+  - pvc
   - configmap
   - secret
   - tls

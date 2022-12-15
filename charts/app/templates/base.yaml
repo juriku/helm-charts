@@ -11,3 +11,4 @@
 {{ include "base.deployment" . }}
 {{ include "base.argoRollouts" . }}
 {{ include "base.analysisTemplate" . }}
+{{ include "base.pvc" . }}

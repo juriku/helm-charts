@@ -1,27 +1,6 @@
 {{- define "base.rbac" -}}
 {{- $root := . -}}
 
-{{- if .Values.aggregationRule -}}
-{{- range .Values.aggregationRule }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-aggregationRule:
-  clusterRoleSelectors:
-  - matchLabels:
-  {{- with .matchLabels }}
-      {{- toYaml . | trim | nindent 6 }}
-  {{- end }}
-metadata:
-  annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-  labels:
-    kubernetes.io/bootstrapping: rbac-defaults
-  name: {{ .name }}
-rules: null
-{{- end }}
-{{- end }}
-
 {{- if .Values.ClusterRole -}}
 {{- range .Values.ClusterRole }}
 ---
@@ -32,17 +11,20 @@ metadata:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   labels:
     kubernetes.io/bootstrapping: rbac-defaults
-  {{- if .labels -}}
-  {{- with .labels }}
+    {{- if .aggregationRule }}
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    {{- end }}
+    {{- with .labels }}
     {{- toYaml . | trim | nindent 4 }}
-  {{- end }}
-  {{- end }}
+    {{- end }}
   name: {{ .name }}
-{{- if .rules -}}
+{{- with .aggregationRule }}
+aggregationRule:
+  {{- toYaml . | trim | nindent 2 }}
+{{- end }}
 {{- with .rules }}
 rules:
   {{- toYaml . | trim | nindent 2 }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -55,25 +37,28 @@ kind: ClusterRoleBinding
 metadata:
   annotations:
     rbac.authorization.kubernetes.io/autoupdate: "true"
-  {{- if .labels -}}
-  labels:
   {{- with .labels }}
+  labels:
     {{- toYaml . | trim | nindent 4 }}
-  {{- end }}
   {{- end }}
   name: {{ .name }}
 subjects:
-{{- if .groups -}}
-{{- range .groups }}
-{{- $valueRange := pluck . $root.Values.Groups | first }}
+{{- range .UserLists }}
+{{- $valueRange := pluck . $root.Values.RbacUserLists | first }}
 {{- range $valueRange }}
 - kind: User
   name: {{ . | trim | quote }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}
+{{- range .GroupLists }}
+{{- $valueRange := pluck . $root.Values.RbacGroupLists | first }}
+{{- range $valueRange }}
+- kind: Group
+  name: {{ . | trim | quote }}
+  apiGroup: rbac.authorization.k8s.io
 {{- end }}
-{{- if .serviceAccountGroups -}}
+{{- end }}
 {{- range .serviceAccountGroups }}
 {{- $valueRange := pluck . $root.Values.serviceAccountGroups | first }}
 {{- range $valueRange }}
@@ -84,13 +69,10 @@ subjects:
   {{- end }}
 {{- end }}
 {{- end }}
-{{- end }}
-{{- if .kubeGroups -}}
 {{- range .kubeGroups }}
 - kind: Group
   name: {{ . | trim | quote }}
   apiGroup: rbac.authorization.k8s.io
-{{- end }}
 {{- end }}
 roleRef:
   kind: ClusterRole
@@ -128,64 +110,71 @@ rules:
 
 {{- if .Values.RoleBinding -}}
 {{- $root := . -}}
+{{- $defaultNamespaces := .Values.defaultNamespaces }}
 {{- range .Values.RoleBinding }}
+{{- $coreRange := . -}}
+{{- $rangeNamespaces := coalesce .namespaces (list .namespace) (list) }}
+{{- $rangeNamespaces := ternary $defaultNamespaces $rangeNamespaces (.defaultNamespaces | default false) }}
+{{- range $rangeNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   annotations:
     rbac.authorization.kubernetes.io/autoupdate: "true"
-  {{- if .labels -}}
+  {{- with $coreRange.labels }}
   labels:
-  {{- with .labels }}
     {{- toYaml . | trim | nindent 4 }}
   {{- end }}
-  {{- end }}
-  name: {{ .name }}
-  {{- if .namespace }}
-  namespace: {{ .namespace | quote }}
+  name: {{ $coreRange.name }}
+  {{- if . }}
+  namespace: {{ . | quote }}
   {{- end }}
 subjects:
-{{- if .groups -}}
-{{- range .groups }}
-{{- $valueRange := pluck . $root.Values.Groups | first }}
+{{- range $coreRange.UserLists }}
+{{- $valueRange := pluck . $root.Values.RbacUserLists | first }}
 {{- range $valueRange }}
 - kind: User
   name: {{ . | trim | quote }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}
-{{- end }}
-{{- if .serviceAccountGroups -}}
-{{- range .serviceAccountGroups }}
-{{- $valueRange := pluck . $root.Values.serviceAccountGroups | first }}
+{{- range $coreRange.GroupLists }}
+{{- $valueRange := pluck . $root.Values.RbacGroupLists | first }}
 {{- range $valueRange }}
-- kind: ServiceAccount
-  name: {{ .name | trim | quote }}
-  {{- if .namespace }}
-  namespace: {{ .namespace | quote }}
-  {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- if .kubeGroups -}}
-{{- range .kubeGroups }}
 - kind: Group
   name: {{ . | trim | quote }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}
+{{- range $coreRange.serviceAccountGroups }}
+{{- $valueRange := pluck . $root.Values.serviceAccountGroups | first }}
+{{- range $valueRange }}
+- kind: ServiceAccount
+  name: {{ $coreRange.name | trim | quote }}
+  {{- if $coreRange.namespace }}
+  namespace: {{ $coreRange.namespace | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- range $coreRange.kubeGroups }}
+- kind: Group
+  name: {{ . | trim | quote }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
 roleRef:
-{{- if .ClusterRoleName }}
+{{- if $coreRange.ClusterRoleName }}
   kind: ClusterRole
-  name: {{ .ClusterRoleName }}
-{{- else if .RoleName }}
+  name: {{ $coreRange.ClusterRoleName }}
+{{- else if $coreRange.RoleName }}
   kind: Role
-  name: {{ .RoleName }}
+  name: {{ $coreRange.RoleName }}
 {{- end }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}
+{{- end }}
+
 
 {{- if .Values.ServiceAccount -}}
 {{- range .Values.ServiceAccount }}

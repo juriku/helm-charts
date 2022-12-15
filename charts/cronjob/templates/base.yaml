@@ -2,3 +2,4 @@
 {{ include "base.secrets" . }}
 {{ include "base.cronjob" . }}
 {{ include "base.rbac" . }}
+{{ include "base.pvc" . }}

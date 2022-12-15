@@ -3,7 +3,7 @@ name: service
 description: A Helm chart for Kubernetes service
 type: application
 
-version: 0.9.5
+version: 0.9.8
 
 keywords:
   - service

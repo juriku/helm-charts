@@ -7,8 +7,8 @@ image:
 
 ## ref: https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#concurrency-policy
 concurrencyPolicy: "Forbid"
-failedJobsHistoryLimit: 3
-successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 2
+successfulJobsHistoryLimit: 2
 backoffLimit: "0"
 # activeDeadlineSeconds: 10800
 # ttlSecondsAfterFinished: 3600

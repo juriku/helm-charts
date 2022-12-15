@@ -3,7 +3,7 @@ name: base
 description: A Helm chart for Kubernetes with helm named templates
 type: library
 
-version: 0.9.6
+version: 0.10.6
 
 keywords:
   - deployment
@@ -16,6 +16,7 @@ keywords:
   - service
   - ingress
   - storageClass
+  - pvc
 
 maintainers:
   - name: juri
