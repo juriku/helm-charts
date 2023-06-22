@@ -82,6 +82,15 @@ spec:
         {{- end }}
       {{- end }}
       containers:
+        - name: {{ include "base.name" $deploymentValues }}
+          {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
+          {{- with $deploymentValues.Values.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
+          {{- . | trim | nindent 10 }}
+          {{- end }}
         {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
         - name: {{ $containerName }}
           {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
@@ -93,15 +102,6 @@ spec:
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
-        - name: {{ include "base.name" $deploymentValues }}
-          {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
-          {{- with $deploymentValues.Values.ports }}
-          ports:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
       {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ $deploymentValues.Values.terminationGracePeriodSeconds }}
       {{- end }}

@@ -21,20 +21,20 @@ spec:
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
+  {{- range .Values.autoscaling.memory }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: {{ .type | default "Utilization" | quote  }}
+          averageUtilization: {{ .averageUtilization | default 50 }}
+  {{- end }}
   {{- range .Values.autoscaling.cpu }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: {{ .type | default "Utilization" | quote }}
-          averageUtilization: {{ .averageUtilization | default 50 }}
-  {{- end }}
-  {{- range .Values.autoscaling.memory }}
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: {{ .type | default "Utilization" | quote  }}
           averageUtilization: {{ .averageUtilization | default 50 }}
   {{- end }}
   {{- range .Values.autoscaling.pubsub_subscription }}

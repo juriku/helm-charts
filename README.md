@@ -38,6 +38,9 @@ command:
   - "sh"
   - "-c"
   - "sleep 60"
+
+ports:
+  - containerPort: 8080
 ```
 
 ```
