@@ -20,3 +20,5 @@ backendConfig: {}
 configmaps: {}
 
 secrets: {}
+
+ingressList: []

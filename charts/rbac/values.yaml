@@ -4,6 +4,8 @@
 #       - admins
 #     ClusterRoleName: cluster-admin
 #   - name: clusterrolebinding-edit
+#      subjects:
+#      - ...
 #     UserLists:
 #       - devops
 #     ClusterRoleName: edit
@@ -11,10 +13,14 @@
 #     kubeGroups:
 #       - system:authenticated
 #     ClusterRoleName: view
+#  subjects:
+#   - ...
 
 # RoleBinding:
 #   - name: rolebinding-default-edit
 #     namespace: default
+#      subjects:
+#      - ...
 #     groups:
 #       - engineer
 #     ClusterRoleName: edit
@@ -22,3 +28,6 @@
 # RbacUserLists:
 #   devops:
 #     - user@mail.com
+
+# ServiceAccount:
+#   - name: name

@@ -49,3 +49,13 @@ service: {}
 #   ports:
 #     ## will take first match "http"
 #     http: 8080
+
+ingressList: []
+# - name: test-2 (optional)
+#   class: nginx (optional)
+#   annotations:
+#     nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8
+#   hosts:
+#     - host: test.example.com
+#       paths:
+#         - path: /api

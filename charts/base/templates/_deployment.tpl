@@ -25,6 +25,7 @@ spec:
   {{- else if not $deploymentValues.Values.autoscaling.enabled }}
   replicas: {{ $deploymentValues.Values.replicas }}
   {{- end }}
+  revisionHistoryLimit: {{ $deploymentValues.Values.revisionHistoryLimit | default 10 }}
   {{- if $deploymentValues.Values.argo.rollouts.enabled }}
   {{- with $deploymentValues.Values.argo.rollouts.strategy }}
   strategy:

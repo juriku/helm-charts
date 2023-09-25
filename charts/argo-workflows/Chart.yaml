@@ -3,7 +3,7 @@ name: argo-workflows
 description: A Helm chart for Kubernetes argocd workflows
 type: application
 
-version: 0.1.1
+version: 0.11.4
 
 keywords:
   - argocd
@@ -15,4 +15,5 @@ maintainers:
 
 dependencies:
   - name: base
+    version: ~0
     repository: file://../base

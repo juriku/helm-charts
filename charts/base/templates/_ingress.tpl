@@ -1,45 +1,69 @@
 {{- define "base.ingress" -}}
-{{- if .Values.ingress.enabled -}}
+{{- $root := . -}}
 {{- $fullName := include "base.fullname" . -}}
 {{- $svcPort := include "base.servicePortDefaultNum" . -}}
 {{- $serviceValues := .Values.service | default dict -}}
 {{- $svcName := $serviceValues.name | default $fullName -}}
+{{- $ingressMap := list -}}
+{{- $defaultIngressValues := .Values.ingress -}}
+{{- if $defaultIngressValues.enabled -}}
+{{- $ingressMap = list $defaultIngressValues -}}
+{{- end -}}
+{{- if .Values.ingressList -}}
+{{- range $item  := .Values.ingressList -}}
+{{- $ingressMap = append $ingressMap $item -}}
+{{- end -}}
+{{- end -}}
+{{- range $index, $ingressValues := $ingressMap }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  {{- if $ingressValues.name }}
+  name: {{ $ingressValues.name }}
+  {{- else }}
+  {{- if eq $index 0 }}
   name: {{ $fullName }}
+  {{- else }}
+  name: {{ printf "%s-%s" $fullName (toString (add $index 1)) }}
+  {{- end }}
+  {{- end }}
   labels:
-    {{- include "base.commonLabels" . | trim | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+    {{- include "base.commonLabels" $root | trim | nindent 4 }}
+    {{- with $ingressValues.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $ingressValues.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.ingress.class }}
-  ingressClassName: {{ .Values.ingress.class | quote }}
+  {{- if $ingressValues.class }}
+  ingressClassName: {{ $ingressValues.class | quote }}
+  {{- else if $defaultIngressValues.class }}
+  ingressClassName: {{ $defaultIngressValues.class | quote }}
   {{- end }}
-  {{- if .Values.ingress.backend }}
+  {{- if $ingressValues.backend }}
   defaultBackend:
-    {{- if .Values.ingress.backend.resource }}
-    {{- with .Values.ingress.backend.resource }}
+    {{- if $ingressValues.backend.resource }}
+    {{- with $ingressValues.backend.resource }}
     resource:
       {{- toYaml . | nindent 6 }}
     {{- end }}
     {{- else }}
     service:
-      name: {{ .Values.ingress.backend.serviceName }}
+      name: {{ $ingressValues.backend.serviceName }}
       port:
-        {{- if regexMatch "[0-9]" ( .Values.ingress.backend.servicePort | toString ) }}
-        number: {{ .Values.ingress.backend.servicePort | default 80 }}
+        {{- if regexMatch "[0-9]" ( $ingressValues.backend.servicePort | toString ) }}
+        number: {{ $ingressValues.backend.servicePort | default 80 }}
         {{- else }}
-        name: {{ .Values.ingress.backend.servicePort }}
+        name: {{ $ingressValues.backend.servicePort }}
         {{- end }}
     {{- end }}
   {{- end }}
   tls:
-  {{- if .Values.ingress.tls }}
-    {{- range .Values.ingress.tls }}
+  {{- if $ingressValues.tls }}
+    {{- range $ingressValues.tls }}
     - hosts:
         {{- range .hosts }}
         - {{ . | quote }}
@@ -50,17 +74,17 @@ spec:
     {{- end }}
   {{- else }}
     - hosts:
-        {{- range .Values.ingress.hosts }}
+        {{- range $ingressValues.hosts }}
         - {{ .host | quote }}
         {{- end }}
-      {{- if .Values.tls }}
-      {{- if .Values.tls.default }}
-      secretName: {{ .Values.tls.default }}
+      {{- if $root.Values.tls }}
+      {{- if $root.Values.tls.default }}
+      secretName: {{ $root.Values.tls.default }}
       {{- end }}
       {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
+    {{- range $ingressValues.hosts }}
     - host: {{ .host | quote }}
       http:
         paths:
