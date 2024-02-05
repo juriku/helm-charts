@@ -44,7 +44,7 @@ ports:
 ```
 
 ```
-helm repo add baseCharts https://yapily.github.io/helm-charts
+helm repo add baseCharts https://juriku.github.io/helm-charts
 ```
 
 ```

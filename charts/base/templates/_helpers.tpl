@@ -100,3 +100,13 @@ range values pairs
 {{ $key }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
+
+{{/*
+raw.resource will create a resource template that can be
+merged with each item in `.Values.resources`.
+*/}}
+{{- define "raw.resource" -}}
+metadata:
+  labels:
+    {{- include "base.commonLabels" . | trim | nindent 4 }}
+{{- end }}

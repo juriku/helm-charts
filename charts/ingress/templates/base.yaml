@@ -2,3 +2,5 @@
 {{ include "base.configmaps" . }}
 {{ include "base.secrets" . }}
 {{ include "base.rbac" . }}
+{{ include "base.service" . }}
+{{ include "base.raw" . }}

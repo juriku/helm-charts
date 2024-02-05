@@ -3,3 +3,4 @@
 {{ include "base.job" . }}
 {{ include "base.rbac" . }}
 {{ include "base.pvc" . }}
+{{ include "base.raw" . }}

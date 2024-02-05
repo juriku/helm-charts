@@ -1,3 +1,4 @@
 
 workflowDefaults: {}
+WorkflowTemplateDefaults: {}
 clusterWorkflowTemplateDefaults: {}

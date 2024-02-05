@@ -5,3 +5,6 @@
 {{ include "base.PriorityClass" . }}
 {{ include "base.rbac" . }}
 {{ include "base.pvc" . }}
+{{ include "base.service" . }}
+{{ include "base.ingress" . }}
+{{ include "base.raw" . }}

@@ -3,7 +3,7 @@ name: prometheus-rules
 description: A Helm chart for Prometheus Rules
 type: application
 
-version: 0.11.4
+version: 0.13.0
 
 keywords:
   - job

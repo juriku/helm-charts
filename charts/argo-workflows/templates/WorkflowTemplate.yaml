@@ -1,0 +1,28 @@
+{{- if .Values.WorkflowTemplates }}
+{{- $appDefaults := .Values.WorkflowTemplateDefaults -}}
+apiVersion: v1
+kind: List
+items:
+{{- range $appValuesOrig := .Values.WorkflowTemplates }}
+{{- $appValues := merge dict $appValuesOrig $appDefaults }}
+  - apiVersion: argoproj.io/v1alpha1
+    kind: WorkflowTemplate
+    metadata:
+      {{- if $appValues.annotations }}
+      annotations:
+      {{- range $key, $value := $appValues.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+      {{- if $appValues.labels }}
+      labels:
+{{- toYaml $appValues.labels | nindent 8 }}
+      {{- end }}
+      name: {{ $appValues.name }}
+      {{- if $appValues.namespace }}
+      namespace: {{ $appValues.namespace }}
+      {{- end }}
+    spec:
+{{- toYaml $appValues.spec | nindent 6 }}
+{{- end }}
+{{- end }}

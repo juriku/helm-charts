@@ -22,3 +22,11 @@ configmaps: {}
 secrets: {}
 
 ingressList: []
+
+service:
+  enabled: false
+
+ingress:
+  enabled: false
+  annotations: {}
+  tls: []

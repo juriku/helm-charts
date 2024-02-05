@@ -6,9 +6,9 @@
 {{ include "base.podDisruptionBudget" . }}
 {{ include "base.horizontalPodAutoscaler" . }}
 {{ include "base.PriorityClass" . }}
-{{ include "base.keda" . }}
 {{ include "base.rbac" . }}
 {{ include "base.deployment" . }}
 {{ include "base.argoRollouts" . }}
 {{ include "base.analysisTemplate" . }}
 {{ include "base.pvc" . }}
+{{ include "base.raw" . }}
