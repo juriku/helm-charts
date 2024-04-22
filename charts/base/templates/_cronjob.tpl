@@ -90,7 +90,6 @@ spec:
           {{- with include "base.volumes" $deploymentValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
-          restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
       {{- with $deploymentValues.Values.podFailurePolicy }}
       podFailurePolicy:
         {{- toYaml . | nindent 8 }}

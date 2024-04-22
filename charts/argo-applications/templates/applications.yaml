@@ -1,9 +1,9 @@
-{{- if .Values.server.additionalApplications }}
-{{- $appDefaults := .Values.server.additionalApplicationsDefaults -}}
+{{- if .Values.applications }}
+{{- $appDefaults := .Values.applicationsDefaults -}}
 apiVersion: v1
 kind: List
 items:
-{{- range $appValuesOrig := .Values.server.additionalApplications }}
+{{- range $appValuesOrig := .Values.applications }}
 {{- $appValues := mergeOverwrite (dict) (deepCopy $appDefaults) $appValuesOrig }}
   - apiVersion: argoproj.io/v1alpha1
     kind: Application
@@ -14,31 +14,44 @@ items:
         {{ $key }}: {{ $value | quote }}
       {{- end }}
       {{- end }}
-      {{- if $appValues.additionalLabels }}
+      {{- with $appValues.additionalLabels }}
       labels:
-{{- toYaml $appValues.additionalLabels | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       name: {{ .name }}
       {{- if $appValues.namespace }}
       namespace: {{ $appValues.namespace }}
       {{- end }}
-      {{- if $appValues.finalizers }}
+      {{- with $appValues.finalizers }}
       finalizers:
-{{- toYaml $appValues.finalizers | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       project: {{ tpl $appValues.project $ }}
+      {{- with $appValues.source }}
       source:
-{{- toYaml $appValues.source | nindent 8 }}
-      destination:
-{{- toYaml $appValues.destination | nindent 8 }}
-      {{- if $appValues.syncPolicy }}
-      syncPolicy:
-{{- toYaml $appValues.syncPolicy | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if $appValues.ignoreDifferences }}
+      {{- with $appValues.sources }}
+      sources:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      destination:
+      {{- toYaml $appValues.destination | nindent 8 }}
+      {{- with $appValues.syncPolicy }}
+      syncPolicy:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $appValues.revisionHistoryLimit }}
+      revisionHistoryLimit: {{ . }}
+      {{- end }}
+      {{- with $appValues.ignoreDifferences }}
       ignoreDifferences:
-{{- toYaml $appValues.ignoreDifferences | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $appValues.info }}
+      info:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
 {{- end }}
 {{- end }}

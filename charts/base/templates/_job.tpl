@@ -25,6 +25,10 @@ spec:
   parallelism: {{ $deploymentValues.Values.parallelism }}
   {{- end }}
   backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
+  {{- with $deploymentValues.Values.podFailurePolicy }}
+  podFailurePolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
     metadata:
@@ -38,7 +42,6 @@ spec:
       {{- end }}
     {{- end }}
     spec:
-      restartPolicy: {{ $deploymentValues.Values.restartPolicy }}
       {{- if $deploymentValues.Values.podActiveDeadlineSeconds }}
       activeDeadlineSeconds: {{ $deploymentValues.Values.podActiveDeadlineSeconds }}
       {{- end }}
@@ -71,8 +74,4 @@ spec:
       {{- with include "base.volumes" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}
-  {{- with $deploymentValues.Values.podFailurePolicy }}
-  podFailurePolicy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 {{- end }}

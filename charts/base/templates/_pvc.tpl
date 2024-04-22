@@ -15,7 +15,7 @@ metadata:
 spec:
   {{- if .volumeName  }}
   volumeName: {{ .volumeName }}
-  storageClassName: ""
+  storageClassName: {{ .storageClassName | default "" }}
   {{- else }}
   storageClassName: {{ .storageClassName | default "standard" }}
   {{- end }}

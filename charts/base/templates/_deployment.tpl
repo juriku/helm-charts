@@ -103,9 +103,6 @@ spec:
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
-      {{- if $deploymentValues.Values.terminationGracePeriodSeconds }}
-      terminationGracePeriodSeconds: {{ $deploymentValues.Values.terminationGracePeriodSeconds }}
-      {{- end }}
       {{- with include "base.volumes" $deploymentValues }}
       {{- . | trim | nindent 6 }}
       {{- end }}

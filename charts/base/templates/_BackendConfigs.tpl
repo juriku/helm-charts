@@ -7,6 +7,9 @@ apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   name: {{ .name }}
+  {{- if .namespace }}
+  namespace: {{ .namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" $root | trim | nindent 4 }}
 spec:
@@ -37,6 +40,14 @@ spec:
     affinityCookieTtlSec: {{ .affinityCookieTtlSec }}
     {{- end }}
 {{- end }}
+{{- with .customRequestHeaders }}
+  customRequestHeaders:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+{{- with .customResponseHeaders }}
+  customResponseHeaders:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- if .Values.frontendConfigs }}
@@ -47,6 +58,9 @@ apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
   name: {{ .name }}
+  {{- if .namespace }}
+  namespace: {{ .namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" $root | trim | nindent 4 }}
 spec:

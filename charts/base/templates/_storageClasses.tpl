@@ -17,7 +17,7 @@ parameters:
 provisioner: {{ .provisioner }}
 {{- end }}
 reclaimPolicy: {{ .reclaimPolicy | default "Retain" }}
-allowVolumeExpansion: {{ .allowVolumeExpansion | default true }}
+allowVolumeExpansion: {{ hasKey . "allowVolumeExpansion" | ternary .allowVolumeExpansion true }}
 volumeBindingMode: {{ .volumeBindingMode | default "Immediate" }}
 {{- end }}
 {{- end }}

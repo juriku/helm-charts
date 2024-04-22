@@ -67,6 +67,11 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+# priorityClassName: name
+# priority: 0
+# preemptionPolicy: PreemptLowerPriority
+
 ## ref: https://cloud.google.com/kubernetes-engine/docs/how-to/container-native-load-balancing
 # terminationGracePeriodSeconds: 180
 # minReadySeconds: 10
@@ -144,6 +149,9 @@ resources: {}
 #   timeoutSeconds: 5
 #   failureThreshold: 3
 
+## ref: https://kubernetes.io/docs/tutorials/services/connect-applications-service/
+# enableServiceLinks: false
+
 ## specify service account
 # serviceAccountName: sa-name
 
@@ -219,7 +227,22 @@ podAntiAffinity:
   - weight: 50
     topologyKey: "kubernetes.io/hostname"
   - weight: 100
-    topologyKey: "failure-domain.beta.kubernetes.io/zone"
+    topologyKey: "topology.kubernetes.io/zone"
+
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+topologySpreadConstraintsDefault:
+  enabled: false
+  maxSkew: 1
+  topologyKey: "topology.kubernetes.io/zone"
+  whenUnsatisfiable: ScheduleAnyway
+
+# topologySpreadConstraints:
+# - labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/component: app
+#   maxSkew: 1
+#   topologyKey: topology.kubernetes.io/zone
+#   whenUnsatisfiable: ScheduleAnyway
 
 lifecycle: {}
 

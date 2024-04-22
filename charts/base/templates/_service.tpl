@@ -13,6 +13,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $serviceName }}
+  {{- if $serviceValues.namespace }}
+  namespace: {{ $serviceValues.namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" $root | trim | nindent 4 }}
     {{- with $serviceValues.labels }}
@@ -60,7 +63,13 @@ spec:
   {{- end }}
   {{- end }}
   selector:
+    {{- if $serviceValues.selector }}
+    {{- with $serviceValues.selector }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- else }}
     {{- include "base.selectorLabels" $root | trim | nindent 4 }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
