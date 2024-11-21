@@ -39,6 +39,10 @@ command:
   - "-c"
   - "sleep 60"
 
+environment:
+  variables:
+    PORT: "8080"
+
 ports:
   - containerPort: 8080
 ```

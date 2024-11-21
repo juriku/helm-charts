@@ -11,13 +11,13 @@ metadata:
 spec:
   scaleTargetRef:
     {{- if .Values.argo.rollouts.enabled }}
-    apiVersion: {{ .Values.argo.rollouts.apiVersion }}
-    kind: {{ .Values.argo.rollouts.kind }}
+    apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion .Values.argo.rollouts.apiVersion }}
+    kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind .Values.argo.rollouts.kind }}
     {{- else }}
-    apiVersion: {{ .Values.apiVersion | default "apps/v1" }}
-    kind: {{ .Values.kind | default "Deployment" }}
+    apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion .Values.apiVersion "apps/v1" }}
+    kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind .Values.kind "Deployment" }}
     {{- end }}
-    name: {{ include "base.fullname" . }}
+    name: {{ .Values.autoscaling.scaleTargetRef.name | default (include "base.fullname" .) }}
   {{- if .Values.autoscaling.minReplicas }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   {{- end }}

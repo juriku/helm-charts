@@ -11,8 +11,10 @@ metadata:
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
-  {{- else if and $autoscaling.enabled $autoscaling.minReplicas }}
-  minAvailable: {{ if (lt (int $autoscaling.minReplicas) 2) }}1{{else}}{{ div $autoscaling.minReplicas 2 }}{{end}}
+  {{- else if and .Values.keda.enabled }}
+  minAvailable: {{ if (lt (int .Values.keda.minReplicaCount) 2) }}1{{else}}{{ div .Values.keda.minReplicaCount 2 }}{{end}}
+  {{- else if and .Values.autoscaling.enabled .Values.autoscaling.minReplicas }}
+  minAvailable: {{ if (lt (int .Values.autoscaling.minReplicas) 2) }}1{{else}}{{ div .Values.autoscaling.minReplicas 2 }}{{end}}
   {{- else }}
   minAvailable: {{ if (lt (int .Values.replicas) 2) }}1{{else}}{{ div .Values.replicas 2 }}{{end}}
   {{- end }}

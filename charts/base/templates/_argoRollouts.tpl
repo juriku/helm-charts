@@ -9,7 +9,9 @@ metadata:
   labels:
     {{- include "base.labels" . | trim | nindent 4 }}
 spec:
-  {{- if .Values.autoscaling.enabled }}
+  {{- if .Values.keda.enabled }}
+  replicas: {{ .Values.keda.minReplicaCount | default 0 }}
+  {{- else if .Values.autoscaling.enabled }}
   replicas: {{ .Values.autoscaling.minReplicas }}
   {{- else }}
   replicas: {{ .Values.replicas }}

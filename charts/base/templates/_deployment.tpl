@@ -22,7 +22,7 @@ metadata:
 spec:
   {{- if and $deploymentValues.Values.argo.rollouts.enabled ( eq $deploymentValues.Values.argo.rollouts.type "workloadRef" ) }}
   replicas: 0
-  {{- else if not $deploymentValues.Values.autoscaling.enabled }}
+  {{- else if and (not $deploymentValues.Values.autoscaling.enabled) (not $deploymentValues.Values.keda.enabled) }}
   replicas: {{ $deploymentValues.Values.replicas }}
   {{- end }}
   revisionHistoryLimit: {{ $deploymentValues.Values.revisionHistoryLimit | default 10 }}

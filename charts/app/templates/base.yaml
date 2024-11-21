@@ -5,6 +5,7 @@
 {{ include "base.verticalPodAutoscaler" . }}
 {{ include "base.podDisruptionBudget" . }}
 {{ include "base.horizontalPodAutoscaler" . }}
+{{ include "base.keda" . }}
 {{ include "base.PriorityClass" . }}
 {{ include "base.rbac" . }}
 {{ include "base.deployment" . }}
