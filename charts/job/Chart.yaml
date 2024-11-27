@@ -3,7 +3,7 @@ name: job
 description: A Helm chart for Kubernetes job
 type: application
 
-version: 0.15.0
+version: 0.15.2
 
 keywords:
   - job

@@ -170,6 +170,7 @@ prometheusScrapePath: /actuator/prometheus
 ## enable HorizontalPodAutoscalers
 autoscaling:
   enabled: false
+  scaleTargetRef: {}
   minReplicas: 2
   maxReplicas: 10
   # pubsub_subscription:
@@ -198,7 +199,6 @@ autoscaling:
   # behavior:
   #   scaleDown:
   #     stabilizationWindowSeconds: 300
-  scaleTargetRef: {}
 
 ## https://keda.sh/docs/latest/reference/scaledobject-spec/
 keda:

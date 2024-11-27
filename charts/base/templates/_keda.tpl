@@ -28,7 +28,9 @@ spec:
     {{- end }}
   pollingInterval: {{ .Values.keda.pollingInterval | default 30 }}
   cooldownPeriod: {{ .Values.keda.cooldownPeriod | default 300 }}
-  idleReplicaCount: {{ .Values.keda.idleReplicaCount | default 0 }}
+  {{- if .Values.keda.idleReplicaCount }}
+  idleReplicaCount: {{ .Values.keda.idleReplicaCount }}
+  {{- end }}
   minReplicaCount:  {{ .Values.keda.minReplicaCount | default 0 }}
   maxReplicaCount:  {{ .Values.keda.maxReplicaCount | default 100 }}
   {{- with .Values.keda.fallback }}
