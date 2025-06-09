@@ -3,6 +3,8 @@
 ## set number of desired replics per environment (will be overriden if hpa is enabled (autoscaling))
 replicas: 1
 
+# namespace: default
+
 ## set repository in the defaults.yaml
 image:
   ## has to be passed

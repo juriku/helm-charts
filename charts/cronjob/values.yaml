@@ -29,6 +29,8 @@ restartPolicy: "Never"
 #     onPodConditions:
 #     - type: DisruptionTarget   # indicates Pod disruption
 
+# namespace: default
+
 ## main labels (overrides default helm labels)
 # labels:
 #   key: value

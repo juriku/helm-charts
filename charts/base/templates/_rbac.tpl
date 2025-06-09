@@ -69,6 +69,8 @@ subjects:
   name: {{ .name | trim | quote }}
   {{- if .namespace }}
   namespace: {{ .namespace | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
 {{- end }}
 {{- end }}
@@ -101,6 +103,8 @@ metadata:
   name: {{ .name }}
   {{- if .namespace }}
   namespace: {{ .namespace | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
 {{- if .rules -}}
 {{- with .rules }}
@@ -132,6 +136,8 @@ metadata:
   name: {{ $coreRange.name }}
   {{- if . }}
   namespace: {{ . | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
 subjects:
 {{- with $coreRange.subjects }}
@@ -160,6 +166,8 @@ subjects:
   name: {{ .name | trim | quote }}
   {{- if .namespace }}
   namespace: {{ .namespace | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
 {{- end }}
 {{- end }}
@@ -188,10 +196,11 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  {{- with .labels }}
   labels:
+    {{- include "base.labels" $root | trim | nindent 4 }}
+    {{- with .labels }}
     {{- toYaml . | trim | nindent 4 }}
-  {{- end }}
+    {{- end }}
   {{- with .annotations }}
   annotations:
     {{- toYaml . | trim | nindent 4 }}
@@ -199,8 +208,9 @@ metadata:
   name: {{ .name }}
   {{- if .namespace }}
   namespace: {{ .namespace | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
 {{- end }}
 {{- end }}
-
 {{- end }}

@@ -5,6 +5,7 @@
 
 # additionalPrometheusRules: []
 #  - name: my-rule-file
+#    namespace: default
 #    groups:
 #      - name: my_group
 #        rules:

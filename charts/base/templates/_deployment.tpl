@@ -10,6 +10,9 @@ kind: {{ $deploymentValues.Values.kind | default "Deployment" }}
 {{- end }}
 metadata:
   name: {{ include "base.fullname" $deploymentValues }}
+  {{- if $deploymentValues.Values.namespace }}
+  namespace: {{ $deploymentValues.Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" $deploymentValues | trim | nindent 4 }}
     {{- with $deploymentValues.Values.labelsDeployment }}

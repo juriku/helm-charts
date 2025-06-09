@@ -7,6 +7,11 @@ apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: {{ .name | default (include "base.fullname" $root) }}
+  {{- if .namespace }}
+  namespace: {{ .namespace }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.commonLabels" $root | trim | nindent 4 }}
 value: {{ .value }}

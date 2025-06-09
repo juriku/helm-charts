@@ -15,6 +15,8 @@ metadata:
   name: {{ $serviceName }}
   {{- if $serviceValues.namespace }}
   namespace: {{ $serviceValues.namespace }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
   labels:
     {{- include "base.labels" $root | trim | nindent 4 }}

@@ -6,6 +6,11 @@ apiVersion: {{ .Values.autoscaling.apiVersion | default "autoscaling/v2" }}
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "base.fullname" . }}
+  {{- if .Values.autoscaling.namespace }}
+  namespace: {{ .Values.autoscaling.namespace }}
+  {{- else if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" . | trim | nindent 4 }}
 spec:
@@ -28,16 +33,26 @@ spec:
       resource:
         name: memory
         target:
+          {{- if hasKey . "averageValue" }}
+          type: {{ .type | default "AverageValue" | quote  }}
+          averageValue: {{ .averageValue }}
+          {{- else }}
           type: {{ .type | default "Utilization" | quote  }}
           averageUtilization: {{ .averageUtilization | default 50 }}
+          {{- end }}
   {{- end }}
   {{- range .Values.autoscaling.cpu }}
     - type: Resource
       resource:
         name: cpu
         target:
-          type: {{ .type | default "Utilization" | quote }}
+          {{- if hasKey . "averageValue" }}
+          type: {{ .type | default "AverageValue" | quote  }}
+          averageValue: {{ .averageValue }}
+          {{- else }}
+          type: {{ .type | default "Utilization" | quote  }}
           averageUtilization: {{ .averageUtilization | default 50 }}
+          {{- end }}
   {{- end }}
   {{- range .Values.autoscaling.pubsub_subscription }}
     - type: External

@@ -5,6 +5,9 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: {{ include "base.fullname" . }}
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" . | trim | nindent 4 }}
 spec:

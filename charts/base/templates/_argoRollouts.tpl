@@ -6,6 +6,9 @@ apiVersion: {{ .Values.argo.rollouts.apiVersion }}
 kind: {{ .Values.argo.rollouts.kind }}
 metadata:
   name: {{ include "base.fullname" . }}
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.labels" . | trim | nindent 4 }}
 spec:

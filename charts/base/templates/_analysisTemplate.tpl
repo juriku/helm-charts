@@ -11,6 +11,9 @@ metadata:
   {{- else }}
   name: {{ include "base.fullname" . }}
   {{- end }}
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
 spec:
   {{- with .Values.argo.analysis.metrics }}
   metrics:

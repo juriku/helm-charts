@@ -7,6 +7,11 @@ apiVersion: {{ .Values.keda.apiVersion | default "keda.sh/v1alpha1" }}
 kind: ScaledObject
 metadata:
   name: {{ include "base.fullname" . }}
+  {{- if .Values.keda.namespace }}
+  namespace: {{ .Values.keda.namespace }}
+  {{- else if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
   labels:
     {{- $labels | trim | nindent 4 }}
   {{- with .Values.keda.annotations }}

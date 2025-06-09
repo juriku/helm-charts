@@ -28,6 +28,11 @@ metadata:
   name: {{ printf "%s-%s" $fullName (toString (add $index 1)) }}
   {{- end }}
   {{- end }}
+  {{- if $ingressValues.namespace }}
+  namespace: {{ $ingressValues.namespace }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.commonLabels" $root | trim | nindent 4 }}
     {{- with $ingressValues.labels }}

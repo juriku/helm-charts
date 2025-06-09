@@ -5,6 +5,8 @@
 nameOverride: ""
 fullnameOverride: ""
 
+# namespace: default
+
 ## configure service
 service:
   enabled: true

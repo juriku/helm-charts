@@ -13,6 +13,8 @@ items:
       name: {{ include "base.fullname" $root }}
       {{- if $prometheusRule.namespace }}
       namespace: {{ $prometheusRule.namespace }}
+      {{- else if $root.Values.namespace }}
+      namespace: {{ $root.Values.namespace }}
       {{- end }}
       labels:
         {{- include "base.labels" $root | trim | nindent 8 }}
@@ -31,6 +33,8 @@ items:
       name: {{ include "base.fullname" $root }}
       {{- if .namespace }}
       namespace: {{ .namespace }}
+      {{- else if $root.Values.namespace }}
+      namespace: {{ $root.Values.namespace }}
       {{- end }}
       labels:
         {{- include "base.labels" $root | trim | nindent 8 }}

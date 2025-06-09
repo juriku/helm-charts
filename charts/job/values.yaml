@@ -7,6 +7,8 @@ image:
 # imagePullSecrets:
 #   - name: image-pull-secret
 
+# namespace: default
+
 ## define security context at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext: {}

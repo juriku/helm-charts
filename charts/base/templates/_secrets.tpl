@@ -16,6 +16,8 @@ metadata:
   name: {{ $secretValues.name | quote }}
   {{- if . }}
   namespace: {{ . | quote }}
+  {{- else if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
   labels:
     {{- include "base.commonLabels" $root | trim | nindent 4 }}

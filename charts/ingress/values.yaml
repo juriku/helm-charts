@@ -10,6 +10,7 @@ ingress:
   # class: nginx
   annotations: {}
     # kubernetes.io/tls-acme: "true"
+  # namespace: default
   ## to override default dackend
   # backend:
   #   serviceName: default-http-backend
@@ -43,6 +44,8 @@ ingress:
 ## to override default tls secret name add:
 # tls:
 #   default: default-tls-secret-name
+
+# namespace: default
 
 ## can be used to define default port name ("http")
 service: {}

@@ -5,6 +5,9 @@ apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
 kind: Job
 metadata:
   name: {{ include "base.fullname" $deploymentValues }}
+  {{- if $deploymentValues.Values.namespace }}
+  namespace: {{ $deploymentValues.Values.namespace }}
+  {{- end }}
   labels:
     {{- include "base.commonLabels" $deploymentValues | trim | nindent 4 }}
   {{- if $deploymentValues.Values.annotations }}
