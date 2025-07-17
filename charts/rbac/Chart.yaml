@@ -3,7 +3,7 @@ name: rbac
 description: A Helm chart for Kubernetes rbac
 type: application
 
-version: 0.16.1
+version: 0.16.2
 
 keywords:
   - rbac

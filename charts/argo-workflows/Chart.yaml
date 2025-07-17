@@ -3,7 +3,7 @@ name: argo-workflows
 description: A Helm chart for Kubernetes argocd workflows
 type: application
 
-version: 0.16.1
+version: 0.16.2
 
 keywords:
   - argocd

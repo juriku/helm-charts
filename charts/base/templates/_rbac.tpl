@@ -59,7 +59,7 @@ subjects:
 {{- range $valueRange }}
 - kind: Group
   name: {{ . | trim | quote }}
-  apiGroup: rbac.authorization.k8s.ioRoleBinding
+  apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}
 {{- range .serviceAccountGroups }}
