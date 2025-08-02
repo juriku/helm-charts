@@ -110,3 +110,17 @@ metadata:
   labels:
     {{- include "base.commonLabels" . | trim | nindent 4 }}
 {{- end }}
+
+{{/*
+Return the kind of the resource.
+StatefulSet or Deployment.
+*/}}
+{{- define "base.kind" -}}
+{{- if .Values.kind }}
+{{- .Values.kind }}
+{{- else if .Values.statefulSet }}
+{{- printf "StatefulSet" }}
+{{- else }}
+{{- printf "Deployment" }}
+{{- end }}
+{{- end }}

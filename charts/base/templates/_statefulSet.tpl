@@ -1,14 +1,9 @@
-{{- define "base.deployment" -}}
-{{- if not .Values.statefulSet }}
+{{- define "base.statefulSet" -}}
+{{- if .Values.statefulSet }}
 {{- $root := . -}}
 ---
-{{- if and $root.Values.argo.rollouts.enabled ( eq $root.Values.argo.rollouts.type "Deployment" ) }}
-apiVersion: {{ $root.Values.argo.rollouts.apiVersion }}
-kind: {{ $root.Values.argo.rollouts.kind }}
-{{- else }}
 apiVersion: {{ $root.Values.apiVersion | default "apps/v1" }}
 kind: {{ include "base.kind" . }}
-{{- end }}
 metadata:
   name: {{ include "base.fullname" $root }}
   {{- if $root.Values.namespace }}
@@ -24,34 +19,27 @@ metadata:
     {{- include "base.valuesPairs" $root.Values.annotations | trim | nindent 4 }}
   {{- end }}
 spec:
-  {{- if and $root.Values.argo.rollouts.enabled ( eq $root.Values.argo.rollouts.type "workloadRef" ) }}
-  replicas: 0
-  {{- else if and (not $root.Values.autoscaling.enabled) (not $root.Values.keda.enabled) }}
+  {{- if and (not $root.Values.autoscaling.enabled) (not $root.Values.keda.enabled) }}
   replicas: {{ $root.Values.replicas }}
   {{- end }}
-  revisionHistoryLimit: {{ $root.Values.revisionHistoryLimit | default 10 }}
-  {{- if $root.Values.argo.rollouts.enabled }}
-  {{- with $root.Values.argo.rollouts.strategy }}
-  strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- else }}
-  {{- with $root.Values.strategy }}
-  strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- end }}
-  {{- if $root.Values.minReadySeconds }}
-  minReadySeconds: {{ $root.Values.minReadySeconds }}
-  {{- end }}
-  {{- if $root.Values.progressDeadlineSeconds }}
-  progressDeadlineSeconds: {{ $root.Values.progressDeadlineSeconds }}
-  {{- end }}
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      {{- include "base.selectorLabels" $root | trim | nindent 6 }}
+      {{- include "base.selectorLabels" $root | trim | nindent 8 }}
+  {{- if $root.Values.serviceName }}
+  serviceName: {{ $root.Values.serviceName }}
+  {{- end }}
+  {{- with $root.Values.strategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
+      labels:
+        {{- include "base.labels" $root | trim | nindent 8 }}
+        {{- with $root.Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- if or $root.Values.prometheusScrape $root.Values.podAnnotations }}
       annotations:
         {{- if $root.Values.prometheusScrape }}
@@ -63,11 +51,6 @@ spec:
         {{- include "base.valuesPairs" $root.Values.podAnnotations | trim | nindent 8 }}
         {{- end }}
       {{- end }}
-      labels:
-        {{- with $root.Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- include "base.selectorLabels" $root | trim | nindent 8 }}
     spec:
       {{- with include "base.podDefaultProperties" $root }}
       {{- . | trim | nindent 6 }}
@@ -110,5 +93,14 @@ spec:
       {{- with include "base.volumes" $root }}
       {{- . | trim | nindent 6 }}
       {{- end }}
+  {{- if $root.Values.volumeClaimTemplates }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ $root.Values.persistentVolumeClaimRetentionPolicy.whenDeleted | default "Retain" }}
+    whenScaled: {{ $root.Values.persistentVolumeClaimRetentionPolicy.whenScaled | default "Retain" }}
+  {{- with $root.Values.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 {{- end }}

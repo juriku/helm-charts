@@ -1,80 +1,80 @@
 {{- define "base.job" -}}
-{{- $deploymentValues := . -}}
+{{- $root := . -}}
 ---
-apiVersion: {{ $deploymentValues.Values.apiVersion | default "batch/v1" }}
+apiVersion: {{ $root.Values.apiVersion | default "batch/v1" }}
 kind: Job
 metadata:
-  name: {{ include "base.fullname" $deploymentValues }}
-  {{- if $deploymentValues.Values.namespace }}
-  namespace: {{ $deploymentValues.Values.namespace }}
+  name: {{ include "base.fullname" $root }}
+  {{- if $root.Values.namespace }}
+  namespace: {{ $root.Values.namespace }}
   {{- end }}
   labels:
-    {{- include "base.commonLabels" $deploymentValues | trim | nindent 4 }}
-  {{- if $deploymentValues.Values.annotations }}
+    {{- include "base.commonLabels" $root | trim | nindent 4 }}
+  {{- if $root.Values.annotations }}
   annotations:
-    {{- include "base.valuesPairs" $deploymentValues.Values.annotations | trim | nindent 4 }}
+    {{- include "base.valuesPairs" $root.Values.annotations | trim | nindent 4 }}
   {{- end }}
 spec:
-  {{- if $deploymentValues.Values.ttlSecondsAfterFinished }}
-  ttlSecondsAfterFinished: {{ $deploymentValues.Values.ttlSecondsAfterFinished }}
+  {{- if $root.Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ $root.Values.ttlSecondsAfterFinished }}
   {{- end }}
-  {{- if $deploymentValues.Values.activeDeadlineSeconds }}
-  activeDeadlineSeconds: {{ $deploymentValues.Values.activeDeadlineSeconds }}
+  {{- if $root.Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ $root.Values.activeDeadlineSeconds }}
   {{- end }}
-  {{- if $deploymentValues.Values.completions }}
-  completions: {{ $deploymentValues.Values.completions }}
+  {{- if $root.Values.completions }}
+  completions: {{ $root.Values.completions }}
   {{- end }}
-  {{- if $deploymentValues.Values.parallelism }}
-  parallelism: {{ $deploymentValues.Values.parallelism }}
+  {{- if $root.Values.parallelism }}
+  parallelism: {{ $root.Values.parallelism }}
   {{- end }}
-  backoffLimit: {{ $deploymentValues.Values.backoffLimit | toString }}
-  {{- with $deploymentValues.Values.podFailurePolicy }}
+  backoffLimit: {{ $root.Values.backoffLimit | toString }}
+  {{- with $root.Values.podFailurePolicy }}
   podFailurePolicy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   template:
-    {{- if or $deploymentValues.Values.podAnnotations $deploymentValues.Values.podLabels }}
+    {{- if or $root.Values.podAnnotations $root.Values.podLabels }}
     metadata:
-      {{- if $deploymentValues.Values.podAnnotations }}
+      {{- if $root.Values.podAnnotations }}
       annotations:
-        {{- include "base.valuesPairs" $deploymentValues.Values.podAnnotations | trim | nindent 8 }}
+        {{- include "base.valuesPairs" $root.Values.podAnnotations | trim | nindent 8 }}
       {{- end }}
-      {{- with $deploymentValues.Values.podLabels }}
+      {{- with $root.Values.podLabels }}
       labels:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     {{- end }}
     spec:
-      {{- if $deploymentValues.Values.podActiveDeadlineSeconds }}
-      activeDeadlineSeconds: {{ $deploymentValues.Values.podActiveDeadlineSeconds }}
+      {{- if $root.Values.podActiveDeadlineSeconds }}
+      activeDeadlineSeconds: {{ $root.Values.podActiveDeadlineSeconds }}
       {{- end }}
-      {{- with include "base.podDefaultProperties" $deploymentValues }}
+      {{- with include "base.podDefaultProperties" $root }}
       {{- . | trim | nindent 6 }}
       {{- end }}
-      {{- if $deploymentValues.Values.initContainers }}
+      {{- if $root.Values.initContainers }}
       initContainers:
-        {{- range $containerName, $containerValues := $deploymentValues.Values.initContainers }}
+        {{- range $containerName, $containerValues := $root.Values.initContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
       {{- end }}
       containers:
-        {{- range $containerName, $containerValues := $deploymentValues.Values.extraContainers }}
+        {{- range $containerName, $containerValues := $root.Values.extraContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $deploymentValues.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
         {{- end }}
-        - name: {{ include "base.name" $deploymentValues }}
-          {{- include "base.image" $deploymentValues.Values.image | nindent 10 }}
-          {{- with include "base.containerDefaultProperties" $deploymentValues.Values }}
+        - name: {{ include "base.name" $root }}
+          {{- include "base.image" $root.Values.image | nindent 10 }}
+          {{- with include "base.containerDefaultProperties" $root.Values }}
           {{- . | trim | nindent 10 }}
           {{- end }}
-      {{- with include "base.volumes" $deploymentValues }}
+      {{- with include "base.volumes" $root }}
       {{- . | trim | nindent 6 }}
       {{- end }}
 {{- end }}

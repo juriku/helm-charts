@@ -48,7 +48,7 @@ pod affinity
 */}}
 {{- define "base.affinity" -}}
 {{- $podAntiAffinity := .Values.podAntiAffinity | default dict -}}
-{{- $deploymentValues := . -}}
+{{- $root := . -}}
 {{- if or .Values.affinity $podAntiAffinity.enabled }}
 affinity:
 {{- with .Values.affinity }}
@@ -61,7 +61,7 @@ affinity:
     {{- range $key, $value := $podAntiAffinity.topology }}
     - labelSelector:
         matchExpressions:
-        {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | trim | toString | fromYaml }}
+        {{- range $key, $value := $root | include "base.selectorLabels" | trim | toString | fromYaml }}
         - key: {{ $key }}
           operator: In
           values:
@@ -76,7 +76,7 @@ affinity:
       podAffinityTerm:
         labelSelector:
           matchExpressions:
-          {{- range $key, $value := $deploymentValues | include "base.selectorLabels" | trim | toString | fromYaml }}
+          {{- range $key, $value := $root | include "base.selectorLabels" | trim | toString | fromYaml }}
           - key: {{ $key }}
             operator: In
             values:

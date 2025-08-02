@@ -1,6 +1,6 @@
 {{- define "base.horizontalPodAutoscaler" -}}
 {{- if .Values.autoscaling.enabled }}
-{{- $deploymentValues := . -}}
+{{- $root := . -}}
 ---
 apiVersion: {{ .Values.autoscaling.apiVersion | default "autoscaling/v2" }}
 kind: HorizontalPodAutoscaler
@@ -20,7 +20,7 @@ spec:
     kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind .Values.argo.rollouts.kind }}
     {{- else }}
     apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion .Values.apiVersion "apps/v1" }}
-    kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind .Values.kind "Deployment" }}
+    kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind ( include "base.kind" . ) }}
     {{- end }}
     name: {{ .Values.autoscaling.scaleTargetRef.name | default (include "base.fullname" .) }}
   {{- if .Values.autoscaling.minReplicas }}
@@ -74,7 +74,7 @@ spec:
         describedObject:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
-          name: {{ .ingress_name | default (include "base.fullname" $deploymentValues) }}
+          name: {{ .ingress_name | default (include "base.fullname" $root) }}
         target:
           type: Value
           value: {{ .AverageValue | default "10k" }}

@@ -3,7 +3,7 @@ name: argo-applications
 description: A Helm chart for Kubernetes argo applications
 type: application
 
-version: 0.16.2
+version: 0.17.2
 
 keywords:
   - argocd

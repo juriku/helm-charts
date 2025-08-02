@@ -542,3 +542,18 @@ argo:
 #   - name: name
 
 # revisionHistoryLimit: 10
+
+
+
+## StatefulSet configuration
+
+## change to try to create StatefulSet instead of Deployment
+statefulSet: false
+
+# serviceName: name-of-headless-service
+
+# volumeClaimTemplates: []
+
+persistentVolumeClaimRetentionPolicy:
+  whenDeleted: Retain
+  whenScaled: Retain

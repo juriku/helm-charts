@@ -21,7 +21,7 @@ spec:
   {{- end }}
   workloadRef:
     apiVersion: {{ .Values.apiVersion | default "apps/v1" }}
-    kind: {{ .Values.kind | default "Deployment" }}
+    kind: {{ include "base.kind" . }}
     name: {{ include "base.fullname" . }}
   {{- with .Values.argo.rollouts.strategy }}
   strategy:

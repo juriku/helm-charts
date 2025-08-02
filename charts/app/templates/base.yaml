@@ -9,6 +9,7 @@
 {{ include "base.PriorityClass" . }}
 {{ include "base.rbac" . }}
 {{ include "base.deployment" . }}
+{{ include "base.statefulSet" . }}
 {{ include "base.argoRollouts" . }}
 {{ include "base.analysisTemplate" . }}
 {{ include "base.pvc" . }}
