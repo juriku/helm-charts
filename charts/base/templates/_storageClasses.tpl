@@ -24,6 +24,10 @@ provisioner: {{ .provisioner }}
 reclaimPolicy: {{ .reclaimPolicy | default "Retain" }}
 allowVolumeExpansion: {{ hasKey . "allowVolumeExpansion" | ternary .allowVolumeExpansion true }}
 volumeBindingMode: {{ .volumeBindingMode | default "Immediate" }}
+{{- with .allowedTopologies }}
+allowedTopologies:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
