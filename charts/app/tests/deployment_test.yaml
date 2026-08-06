@@ -125,8 +125,52 @@ tests:
           path: kind
           value: Deployment
 
-  - it: should not currently hash config into the pod template
+  - it: should hash configmap content into the pod template
     set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: value
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: ^[a-f0-9]{64}$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should hash secret content into the pod template
+    set:
+      secrets:
+        decoded:
+          - name: app-secret
+            values:
+              API_KEY: secret
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/secrets"]
+          pattern: ^[a-f0-9]{64}$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should change the config hash when configmap content changes
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: changed
+    asserts:
+      - notMatchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: ^e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not hash config when rollOnConfigChange is disabled
+    set:
+      rollOnConfigChange: false
       configmaps:
         - name: app-config
           values:
@@ -134,6 +178,19 @@ tests:
     asserts:
       - notExists:
           path: spec.template.metadata.annotations["checksum/config"]
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not add checksum annotations when there is no config
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/config"]
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secrets"]
         documentSelector:
           path: kind
           value: Deployment

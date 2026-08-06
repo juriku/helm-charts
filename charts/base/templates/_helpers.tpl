@@ -93,6 +93,20 @@ service port default
 {{- end }}
 
 {{/*
+Hash the rendered configmaps and secrets so a change to either rolls the pods.
+*/}}
+{{- define "base.configChecksums" -}}
+{{- if or (not (hasKey .Values "rollOnConfigChange")) .Values.rollOnConfigChange }}
+{{- with include "base.configmaps" . }}
+checksum/config: {{ . | sha256sum }}
+{{- end }}
+{{- with include "base.secrets" . }}
+checksum/secrets: {{ . | sha256sum }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Render a value as a string. YAML parses numbers as float64, so toString alone
 turns large integers into scientific notation.
 */}}

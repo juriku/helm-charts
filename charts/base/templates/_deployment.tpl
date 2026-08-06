@@ -52,8 +52,12 @@ spec:
       {{- include "base.selectorLabels" $root | trim | nindent 6 }}
   template:
     metadata:
-      {{- if or $root.Values.prometheusScrape $root.Values.podAnnotations }}
+      {{- $checksums := include "base.configChecksums" $root }}
+      {{- if or $root.Values.prometheusScrape $root.Values.podAnnotations $checksums }}
       annotations:
+        {{- with $checksums }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
         {{- if $root.Values.prometheusScrape }}
         prometheus.io/path: {{ $root.Values.prometheusScrapePath | quote }}
         prometheus.io/port: {{ $root.Values.prometheusScrapePort | quote }}
