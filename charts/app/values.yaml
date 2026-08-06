@@ -393,7 +393,7 @@ ingress:
   #     apiGroup: k8s.example.com
   #     kind: StorageBucket
   #     name: icon-assets
-  hosts: {}
+  hosts: []
     # - host: chart-example.local
     ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
     #   serviceName: service_name

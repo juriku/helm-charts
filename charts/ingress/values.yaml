@@ -19,7 +19,7 @@ ingress:
   #     apiGroup: k8s.example.com
   #     kind: StorageBucket
   #     name: icon-assets
-  hosts: {}
+  hosts: []
     # - host: chart-example.local
     ## by default serviceName will be taken from Release Name or Values.fullnameOverride , to override add:
     #   serviceName: service_name
@@ -46,12 +46,6 @@ ingress:
 #   default: default-tls-secret-name
 
 # namespace: default
-
-## can be used to define default port name ("http")
-service: {}
-#   ports:
-#     ## will take first match "http"
-#     http: 8080
 
 ingressList: []
 # - name: test-2 (optional)

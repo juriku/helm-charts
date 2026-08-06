@@ -2,6 +2,8 @@
 {{ include "base.secrets" . }}
 {{ include "base.service" . }}
 {{ include "base.ingress" . }}
+{{ include "base.networkPolicy" . }}
+{{ include "base.serviceMonitor" . }}
 {{ include "base.verticalPodAutoscaler" . }}
 {{ include "base.podDisruptionBudget" . }}
 {{ include "base.horizontalPodAutoscaler" . }}
