@@ -51,29 +51,10 @@ spec:
       {{- with include "base.podDefaultProperties" $root }}
       {{- . | trim | nindent 6 }}
       {{- end }}
-      {{- if $root.Values.initContainers }}
-      initContainers:
-        {{- range $containerName, $containerValues := $root.Values.initContainers }}
-        - name: {{ $containerName }}
-          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
-          {{- with include "base.containerDefaultProperties" $containerValues }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
-        {{- end }}
+      {{- with include "base.initContainers" $root }}
+      {{- . | trim | nindent 6 }}
       {{- end }}
-      containers:
-        {{- range $containerName, $containerValues := $root.Values.extraContainers }}
-        - name: {{ $containerName }}
-          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
-          {{- with include "base.containerDefaultProperties" $containerValues }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
-        {{- end }}
-        - name: {{ include "base.name" $root }}
-          {{- include "base.image" $root.Values.image | nindent 10 }}
-          {{- with include "base.containerDefaultProperties" $root.Values }}
-          {{- . | trim | nindent 10 }}
-          {{- end }}
+      {{- include "base.containers" $root | trim | nindent 6 }}
       {{- with include "base.volumes" $root }}
       {{- . | trim | nindent 6 }}
       {{- end }}

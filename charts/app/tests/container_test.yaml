@@ -17,6 +17,29 @@ tests:
           path: kind
           value: Deployment
 
+  - it: should reference the image by digest when one is given
+    set:
+      image.digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: example.com/app@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should prefer the digest over the tag
+    set:
+      image.tag: "9.9.9"
+      image.digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ":9\\.9\\.9"
+        documentSelector:
+          path: kind
+          value: Deployment
+
   - it: should infer IfNotPresent for a tag containing a digit
     asserts:
       - equal:
@@ -292,7 +315,52 @@ tests:
           path: kind
           value: Deployment
 
-  - it: should order init containers alphabetically regardless of declaration order
+  - it: should preserve declaration order when init containers are a list
+    set:
+      initContainers:
+        - name: zeta-wait
+          image:
+            tag: "1.0.0"
+          command: ["sh", "-c", "sleep 1"]
+        - name: alpha-migrate
+          image:
+            tag: "1.0.0"
+          command: ["sh", "-c", "migrate"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: zeta-wait
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: alpha-migrate
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should support extra containers as an ordered list
+    set:
+      extraContainers:
+        - name: sidecar
+          image:
+            tag: "4.5.6"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: sidecar
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: example.com/app:4.5.6
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should order init containers alphabetically when declared as a map
     set:
       initContainers:
         zeta-wait:

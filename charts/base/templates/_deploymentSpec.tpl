@@ -2,7 +2,11 @@
 define container image
 */}}
 {{- define "base.image" -}}
+{{- if .digest }}
+image: "{{ .repository }}@{{ .digest }}"
+{{- else }}
 image: "{{ .repository }}:{{ .tag | toString }}"
+{{- end }}
 {{- if .pullPolicy }}
 imagePullPolicy: {{ .pullPolicy }}
 {{- else }}
