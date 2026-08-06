@@ -19,7 +19,7 @@ spec:
     apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion .Values.argo.rollouts.apiVersion }}
     kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind .Values.argo.rollouts.kind }}
     {{- else }}
-    apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion .Values.apiVersion "apps/v1" }}
+    apiVersion: {{ coalesce .Values.autoscaling.scaleTargetRef.apiVersion "apps/v1" }}
     kind: {{ coalesce .Values.autoscaling.scaleTargetRef.kind ( include "base.kind" . ) }}
     {{- end }}
     name: {{ .Values.autoscaling.scaleTargetRef.name | default (include "base.fullname" .) }}

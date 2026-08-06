@@ -1,7 +1,7 @@
 {{- define "base.cronjob" -}}
 {{- $root := . -}}
 ---
-apiVersion: {{ $root.Values.apiVersion | default "batch/v1" }}
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "base.fullname" $root }}

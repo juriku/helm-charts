@@ -120,6 +120,7 @@ envFrom:
       name: {{ $configMapName }}
 {{- end }}
 {{- end }}
+{{- if or .environment.metadata .environment.secretVariables .environment.configmapVariables .environment.variables }}
 env:
 {{- range $variableName, $value := .environment.metadata }}
   - name: {{ $variableName }}
@@ -145,6 +146,7 @@ env:
 {{- $valueStr := include "base.valueString" $value }}
   - name: {{ $key | quote }}
     value: {{ if eq $valueStr "<nil>" }}""{{ else }}{{ $valueStr | quote }}{{ end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -279,7 +281,9 @@ define pod service account
 {{- if hasKey . "automountServiceAccountToken" }}
 automountServiceAccountToken: {{ .automountServiceAccountToken }}
 {{- end }}
-serviceAccountName: {{ .serviceAccountName | default "default" }}
+{{- with .serviceAccountName }}
+serviceAccountName: {{ . }}
+{{- end }}
 {{- end }}
 
 {{/*

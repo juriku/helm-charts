@@ -20,7 +20,7 @@ spec:
   replicas: {{ .Values.replicas }}
   {{- end }}
   workloadRef:
-    apiVersion: {{ .Values.apiVersion | default "apps/v1" }}
+    apiVersion: apps/v1
     kind: {{ include "base.kind" . }}
     name: {{ include "base.fullname" . }}
   {{- with .Values.argo.rollouts.strategy }}

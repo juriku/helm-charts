@@ -3,14 +3,14 @@ name: job
 description: A Helm chart for Kubernetes job
 type: application
 
-version: 0.18.0
+version: 0.18.1
 
 keywords:
   - job
 
 maintainers:
   - name: juri
-    url: https://github.com/juriku/helm-charts
+    url: https://github.com/ferodrinks/helm-charts
 
 dependencies:
   - name: base
@@ -18,4 +18,4 @@ dependencies:
     repository: file://../base
 
 annotations:
-  org.opencontainers.image.source: https://github.com/juriku/helm-charts
+  org.opencontainers.image.source: https://github.com/ferodrinks/helm-charts

@@ -14,6 +14,84 @@ tests:
       - hasDocuments:
           count: 1
 
+  - it: should not stamp Kubernetes system role markers on a custom ClusterRole
+    set:
+      ClusterRole:
+        - name: reader
+          rules:
+            - apiGroups: [""]
+              resources: [pods]
+              verbs: [get]
+    asserts:
+      - notExists:
+          path: metadata.labels["kubernetes.io/bootstrapping"]
+        documentSelector:
+          path: kind
+          value: ClusterRole
+      - notExists:
+          path: metadata.annotations["rbac.authorization.kubernetes.io/autoupdate"]
+        documentSelector:
+          path: kind
+          value: ClusterRole
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: ClusterRole
+
+  - it: should not aggregate a role into edit unless asked
+    set:
+      ClusterRole:
+        - name: aggregating
+          aggregationRule:
+            clusterRoleSelectors:
+              - matchLabels:
+                  example.com/aggregate: "true"
+    asserts:
+      - notExists:
+          path: metadata.labels["rbac.authorization.k8s.io/aggregate-to-edit"]
+        documentSelector:
+          path: kind
+          value: ClusterRole
+      - exists:
+          path: aggregationRule.clusterRoleSelectors
+        documentSelector:
+          path: kind
+          value: ClusterRole
+
+  - it: should omit subjects entirely when a binding has none
+    set:
+      ClusterRoleBinding:
+        - name: no-subjects
+          ClusterRoleName: view
+    asserts:
+      - notExists:
+          path: subjects
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should support annotations on rbac resources
+    set:
+      Role:
+        - name: annotated
+          namespace: team-a
+          annotations:
+            owner: platform
+          rules:
+            - apiGroups: [""]
+              resources: [pods]
+              verbs: [get]
+    asserts:
+      - equal:
+          path: metadata.annotations.owner
+          value: platform
+        documentSelector:
+          path: kind
+          value: Role
+
   - it: should render a ClusterRole with its rules
     set:
       ClusterRole:

@@ -24,7 +24,7 @@ spec:
     apiVersion: {{ coalesce .Values.keda.scaleTargetRef.apiVersion .Values.argo.rollouts.apiVersion }}
     kind: {{ coalesce .Values.keda.scaleTargetRef.kind .Values.argo.rollouts.kind }}
     {{- else }}
-    apiVersion: {{ coalesce .Values.keda.scaleTargetRef.apiVersion .Values.apiVersion "apps/v1" }}
+    apiVersion: {{ coalesce .Values.keda.scaleTargetRef.apiVersion "apps/v1" }}
     kind: {{ coalesce .Values.keda.scaleTargetRef.kind ( include "base.kind" . ) }}
     {{- end }}
     name: {{ .Values.keda.scaleTargetRef.name | default (include "base.fullname" .) }}

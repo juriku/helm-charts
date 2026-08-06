@@ -3,14 +3,14 @@ name: service
 description: A Helm chart for Kubernetes service
 type: application
 
-version: 0.18.0
+version: 0.18.1
 
 keywords:
   - service
 
 maintainers:
   - name: juri
-    url: https://github.com/juriku/helm-charts
+    url: https://github.com/ferodrinks/helm-charts
 
 dependencies:
   - name: base
@@ -18,4 +18,4 @@ dependencies:
     repository: file://../base
 
 annotations:
-  org.opencontainers.image.source: https://github.com/juriku/helm-charts
+  org.opencontainers.image.source: https://github.com/ferodrinks/helm-charts

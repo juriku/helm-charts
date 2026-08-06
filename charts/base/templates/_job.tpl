@@ -1,7 +1,7 @@
 {{- define "base.job" -}}
 {{- $root := . -}}
 ---
-apiVersion: {{ $root.Values.apiVersion | default "batch/v1" }}
+apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "base.fullname" $root }}

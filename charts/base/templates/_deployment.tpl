@@ -6,7 +6,7 @@
 apiVersion: {{ $root.Values.argo.rollouts.apiVersion }}
 kind: {{ $root.Values.argo.rollouts.kind }}
 {{- else }}
-apiVersion: {{ $root.Values.apiVersion | default "apps/v1" }}
+apiVersion: apps/v1
 kind: {{ include "base.kind" . }}
 {{- end }}
 metadata:

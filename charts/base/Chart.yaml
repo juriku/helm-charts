@@ -3,7 +3,7 @@ name: base
 description: A Helm chart for Kubernetes with helm named templates
 type: library
 
-version: 0.18.0
+version: 0.18.1
 
 keywords:
   - deployment
@@ -20,7 +20,7 @@ keywords:
 
 maintainers:
   - name: juri
-    url: https://github.com/juriku/helm-charts
+    url: https://github.com/ferodrinks/helm-charts
 
 annotations:
-  org.opencontainers.image.source: https://github.com/juriku/helm-charts
+  org.opencontainers.image.source: https://github.com/ferodrinks/helm-charts

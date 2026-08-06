@@ -2,7 +2,7 @@
 {{- if .Values.statefulSet }}
 {{- $root := . -}}
 ---
-apiVersion: {{ $root.Values.apiVersion | default "apps/v1" }}
+apiVersion: apps/v1
 kind: {{ include "base.kind" . }}
 metadata:
   name: {{ include "base.fullname" $root }}

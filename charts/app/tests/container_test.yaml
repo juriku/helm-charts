@@ -180,14 +180,19 @@ tests:
           path: kind
           value: Deployment
 
-  - it: should emit a null env key when only envFrom is used
+  - it: should not emit an env key when only envFrom is used
     set:
       environment:
         envFromConfigMaps:
           - shared-config
     asserts:
-      - isNullOrEmpty:
+      - notExists:
           path: spec.template.spec.containers[0].env
+        documentSelector:
+          path: kind
+          value: Deployment
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
         documentSelector:
           path: kind
           value: Deployment

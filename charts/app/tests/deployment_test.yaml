@@ -158,11 +158,10 @@ tests:
           path: kind
           value: Deployment
 
-  - it: should pin the default service account when none is set
+  - it: should not set a service account name when none is configured
     asserts:
-      - equal:
+      - notExists:
           path: spec.template.spec.serviceAccountName
-          value: default
         documentSelector:
           path: kind
           value: Deployment
