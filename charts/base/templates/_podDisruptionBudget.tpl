@@ -14,7 +14,9 @@ metadata:
   labels:
     {{- include "base.labels" . | trim | nindent 4 }}
 spec:
-  {{- if .Values.podDisruptionBudget.minAvailable }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- else if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   {{- else if and .Values.keda.enabled }}
   minAvailable: {{ if (lt (int .Values.keda.minReplicaCount) 2) }}1{{else}}{{ div .Values.keda.minReplicaCount 2 }}{{end}}
@@ -22,9 +24,6 @@ spec:
   minAvailable: {{ if (lt (int .Values.autoscaling.minReplicas) 2) }}1{{else}}{{ div .Values.autoscaling.minReplicas 2 }}{{end}}
   {{- else }}
   minAvailable: {{ if (lt (int .Values.replicas) 2) }}1{{else}}{{ div .Values.replicas 2 }}{{end}}
-  {{- end }}
-  {{- if .Values.podDisruptionBudget.maxUnavailable }}
-  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
   {{- end }}
   selector:
     matchLabels:

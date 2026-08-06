@@ -1,0 +1,114 @@
+suite: naming edge cases
+templates:
+  - templates/base.yaml
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should accept the longest release name Helm allows
+    release:
+      name: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeefff
+    asserts:
+      - equal:
+          path: metadata.name
+          value: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeefff
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: metadata.name
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should truncate an over-long fullnameOverride to 63 characters
+    release:
+      name: short
+    set:
+      fullnameOverride: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggg
+    asserts:
+      - equal:
+          path: metadata.name
+          value: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffggg
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: metadata.name
+          pattern: ^.{63}$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not leave a trailing dash after truncating fullnameOverride
+    release:
+      name: short
+    set:
+      fullnameOverride: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgg-hhhh
+    asserts:
+      - equal:
+          path: metadata.name
+          value: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgg
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notMatchRegex:
+          path: metadata.name
+          pattern: -$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should truncate an over-long nameOverride for the container name
+    release:
+      name: short
+    set:
+      nameOverride: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggg
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].name
+          pattern: ^.{63}$
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep the selector aligned with a truncated fullnameOverride
+    release:
+      name: short
+    set:
+      fullnameOverride: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggg
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffggg
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.metadata.labels.app
+          value: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffggg
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep label values within the 63 character limit
+    release:
+      name: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeefff
+    set:
+      nameOverride: aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggg
+    asserts:
+      - matchRegex:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          pattern: ^.{1,63}$
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: metadata.labels["app.kubernetes.io/name"]
+          pattern: ^.{1,63}$
+        documentSelector:
+          path: kind
+          value: Deployment

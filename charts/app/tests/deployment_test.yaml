@@ -1,0 +1,218 @@
+suite: deployment spec
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should set replicas from values by default
+    set:
+      replicas: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should omit replicas when the HPA owns scaling
+    set:
+      replicas: 3
+      autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should omit replicas when KEDA owns scaling
+    set:
+      replicas: 3
+      keda.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should default revisionHistoryLimit to 10
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 10
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should apply an explicit update strategy
+    set:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 0
+    asserts:
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: 0
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set minReadySeconds and progressDeadlineSeconds when provided
+    set:
+      minReadySeconds: 10
+      progressDeadlineSeconds: 600
+    asserts:
+      - equal:
+          path: spec.minReadySeconds
+          value: 10
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 600
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should add prometheus scrape annotations to the pod template
+    set:
+      prometheusScrape: true
+      prometheusScrapePort: metrics
+      prometheusScrapePath: /metrics
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "metrics"
+            prometheus.io/path: "/metrics"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep workload annotations separate from pod annotations
+    set:
+      annotations:
+        owner: platform
+      podAnnotations:
+        example.com/inject: "true"
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            owner: platform
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: metadata.annotations["example.com/inject"]
+        documentSelector:
+          path: kind
+          value: Deployment
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            example.com/inject: "true"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not currently hash config into the pod template
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: value
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/config"]
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should default enableServiceLinks to true
+    asserts:
+      - equal:
+          path: spec.template.spec.enableServiceLinks
+          value: true
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should allow disabling enableServiceLinks
+    set:
+      enableServiceLinks: false
+    asserts:
+      - equal:
+          path: spec.template.spec.enableServiceLinks
+          value: false
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should pin the default service account when none is set
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should use an explicit serviceAccountName
+    set:
+      serviceAccountName: app-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: app-sa
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should set terminationGracePeriodSeconds when provided
+    set:
+      terminationGracePeriodSeconds: 180
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 180
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should apply pod-level securityContext
+    set:
+      podSecurityContext:
+        runAsNonRoot: true
+        fsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsNonRoot: true
+            fsGroup: 2000
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render imagePullSecrets
+    set:
+      imagePullSecrets:
+        - name: registry-creds
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: registry-creds
+        documentSelector:
+          path: kind
+          value: Deployment

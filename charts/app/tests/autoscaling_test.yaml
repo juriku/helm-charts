@@ -1,0 +1,349 @@
+suite: autoscaling and disruption budgets
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render no autoscaler by default
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should target the workload it scales
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+    asserts:
+      - isAPIVersion:
+          of: autoscaling/v2
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.scaleTargetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: my-release
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should target the Rollout when argo rollouts is enabled
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      argo.rollouts.enabled: true
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Rollout
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: argoproj.io/v1alpha1
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render cpu and memory utilisation metrics
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      autoscaling.cpu:
+        - averageUtilization: 70
+      autoscaling.memory:
+        - averageUtilization: 80
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 70
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 80
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should switch to AverageValue when averageValue is given
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      autoscaling.cpu:
+        - averageValue: 500m
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: AverageValue
+                averageValue: 500m
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render a pubsub external metric
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      autoscaling.pubsub_subscription:
+        - subscription_id: orders
+    asserts:
+      - equal:
+          path: spec.metrics[0].type
+          value: External
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.metrics[0].external.metric.name
+          value: pubsub.googleapis.com|subscription|num_undelivered_messages
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.metrics[0].external.metric.selector.matchLabels["resource.labels.subscription_id"]
+          value: orders
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render an ingress requests object metric describing the ingress
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      autoscaling.ingress_requests:
+        - name: requests-per-second
+    asserts:
+      - equal:
+          path: spec.metrics[0].type
+          value: Object
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.metrics[0].object.describedObject
+          value:
+            apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            name: my-release
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should pass custom metrics and behavior through untouched
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      autoscaling.metrics:
+        - type: Pods
+          pods:
+            metric:
+              name: packets-per-second
+            target:
+              type: AverageValue
+              averageValue: 1k
+      autoscaling.behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Pods
+            pods:
+              metric:
+                name: packets-per-second
+              target:
+                type: AverageValue
+                averageValue: 1k
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 300
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should render a KEDA ScaledObject targeting the workload
+    set:
+      keda.enabled: true
+      keda.minReplicaCount: 2
+      keda.maxReplicaCount: 20
+      keda.triggers:
+        - type: cron
+          metadata:
+            timezone: UTC
+            start: 0 6 * * *
+            end: 0 20 * * *
+            desiredReplicas: "4"
+    asserts:
+      - isKind:
+          of: ScaledObject
+        documentSelector:
+          path: kind
+          value: ScaledObject
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: ScaledObject
+      - equal:
+          path: spec.minReplicaCount
+          value: 2
+        documentSelector:
+          path: kind
+          value: ScaledObject
+      - equal:
+          path: spec.maxReplicaCount
+          value: 20
+        documentSelector:
+          path: kind
+          value: ScaledObject
+
+  - it: should derive the disruption budget from replicas
+    set:
+      replicas: 6
+      podDisruptionBudget.enabled: true
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 3
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should never derive a disruption budget below one
+    set:
+      replicas: 1
+      podDisruptionBudget.enabled: true
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 1
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should prefer the autoscaler minimum when autoscaling is enabled
+    set:
+      replicas: 10
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 20
+      autoscaling.minReplicas: 4
+      podDisruptionBudget.enabled: true
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should prefer the KEDA minimum over the autoscaler minimum
+    set:
+      keda.enabled: true
+      keda.minReplicaCount: 8
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 20
+      autoscaling.minReplicas: 4
+      podDisruptionBudget.enabled: true
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 4
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should use an explicit minAvailable when given
+    set:
+      podDisruptionBudget.enabled: true
+      podDisruptionBudget.minAvailable: 5
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 5
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should not set both minAvailable and maxUnavailable
+    set:
+      podDisruptionBudget.enabled: true
+      podDisruptionBudget.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+      - notExists:
+          path: spec.minAvailable
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should select the same pods as the workload
+    set:
+      podDisruptionBudget.enabled: true
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+
+  - it: should render a vertical pod autoscaler in the requested mode
+    set:
+      verticalPodAutoscaler.enabled: true
+      verticalPodAutoscaler.updateMode: Auto
+    asserts:
+      - isKind:
+          of: VerticalPodAutoscaler
+        documentSelector:
+          path: kind
+          value: VerticalPodAutoscaler
+      - equal:
+          path: spec.updatePolicy.updateMode
+          value: Auto
+        documentSelector:
+          path: kind
+          value: VerticalPodAutoscaler

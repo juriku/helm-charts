@@ -1,3 +1,4 @@
-.deploy
 Chart.lock
 *.tgz
+.cr-release-packages
+.cr-index

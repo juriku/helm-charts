@@ -24,7 +24,7 @@ metadata:
   {{- end}}
 data:
 {{- range $key, $value := $configValuesList.values }}
-{{- $valueStr := $value | toString }}
+{{- $valueStr := include "base.valueString" $value }}
   {{ $key -}}: {{ if eq $valueStr "<nil>" }}""{{ else }}{{ $valueStr | quote }}{{ end }}
 {{- end }}
 {{- range $key, $value := $configValuesList.valuesMultiLine }}

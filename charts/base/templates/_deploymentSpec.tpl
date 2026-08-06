@@ -142,7 +142,7 @@ env:
         key: {{ $opts.key }}
 {{- end }}
 {{- range $key, $value := .environment.variables }}
-{{- $valueStr := $value | toString }}
+{{- $valueStr := include "base.valueString" $value }}
   - name: {{ $key | quote }}
     value: {{ if eq $valueStr "<nil>" }}""{{ else }}{{ $valueStr | quote }}{{ end }}
 {{- end }}
@@ -289,7 +289,7 @@ define topologySpreadConstraints
 {{- if or (and (index .Values "topologySpreadConstraintsDefault") (index .Values.topologySpreadConstraintsDefault "enabled")) .Values.topologySpreadConstraints }}
 topologySpreadConstraints:
 {{- with .Values.topologySpreadConstraints }}
-{{ toYaml . | indent 2 }}
+{{ toYaml . }}
 {{- end }}
 {{- if .Values.topologySpreadConstraintsDefault.enabled }}
 - labelSelector:

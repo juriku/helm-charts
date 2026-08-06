@@ -1,0 +1,250 @@
+suite: service
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should render a service named after the release by default
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should not render a service when disabled
+    set:
+      service.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should use an explicit service name
+    set:
+      service.name: custom-svc
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-svc
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should render ports from service.ports
+    set:
+      service.ports:
+        - port: 80
+          targetPort: 8080
+          name: http
+        - port: 9090
+          protocol: UDP
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            port: 80
+            targetPort: 8080
+            protocol: TCP
+            name: http
+        documentSelector:
+          path: kind
+          value: Service
+      - contains:
+          path: spec.ports
+          content:
+            port: 9090
+            targetPort: 9090
+            protocol: UDP
+            name: http-1
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should fall back to container ports when service.ports is unset
+    set:
+      ports:
+        - containerPort: 8080
+          name: http
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            port: 8080
+            targetPort: 8080
+            protocol: TCP
+            name: http
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should render no ports when neither service.ports nor ports is set
+    asserts:
+      - isNullOrEmpty:
+          path: spec.ports
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should select pods using the workload selector labels
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should use an explicit selector when provided
+    set:
+      service.selector:
+        app: other
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: other
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should support NodePort with an explicit nodePort
+    set:
+      service.type: NodePort
+      service.ports:
+        - port: 80
+          nodePort: 30080
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should support loadBalancerIP, clusterIP, sessionAffinity and externalTrafficPolicy
+    set:
+      service.type: LoadBalancer
+      service.loadBalancerIP: 10.0.0.1
+      service.clusterIP: 10.0.0.2
+      service.sessionAffinity: ClientIP
+      service.externalTrafficPolicy: Local
+    asserts:
+      - equal:
+          path: spec.loadBalancerIP
+          value: 10.0.0.1
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.clusterIP
+          value: 10.0.0.2
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.sessionAffinity
+          value: ClientIP
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should render an ExternalName service without ports
+    set:
+      service.ExternalName: my.database.example.com
+    asserts:
+      - equal:
+          path: spec.type
+          value: ExternalName
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.externalName
+          value: my.database.example.com
+        documentSelector:
+          path: kind
+          value: Service
+      - notExists:
+          path: spec.ports
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should apply service annotations and extra labels
+    set:
+      service.annotations:
+        cloud.google.com/neg: '{"ingress": true}'
+      service.labels:
+        tier: edge
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            cloud.google.com/neg: '{"ingress": true}'
+        documentSelector:
+          path: kind
+          value: Service
+      - isSubset:
+          path: metadata.labels
+          content:
+            tier: edge
+        documentSelector:
+          path: kind
+          value: Service
+
+  - it: should render extraServices alongside the main service
+    set:
+      service.name: main-svc
+      service.ports:
+        - port: 80
+      extraServices:
+        app-metrics:
+          ports:
+            - port: 9090
+              name: metrics
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+        documentSelector:
+          path: metadata.name
+          value: main-svc
+      - equal:
+          path: spec.ports[0].port
+          value: 9090
+        documentSelector:
+          path: metadata.name
+          value: app-metrics
+      - equal:
+          path: spec.selector
+          value:
+            app: my-release
+        documentSelector:
+          path: metadata.name
+          value: app-metrics

@@ -1,0 +1,248 @@
+suite: cross-resource consistency
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should have the service select the pods the workload creates
+    set:
+      service.ports:
+        - port: 80
+          targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Service
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep service selector and pod labels aligned under custom selectorLabels
+    set:
+      selectorLabels:
+        app: app-blue
+        role: api
+      service.ports:
+        - port: 80
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: app-blue
+            role: api
+        documentSelector:
+          path: kind
+          value: Service
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: app-blue
+            role: api
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should point the ingress at the service name that exists
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      service.ports:
+        - port: 8080
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should follow a renamed service from the ingress backend
+    set:
+      service.name: custom-svc
+      service.ports:
+        - port: 9090
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-svc
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: custom-svc
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9090
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should point the autoscaler at the workload that exists
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+
+  - it: should point the autoscaler at a StatefulSet when that is the workload
+    set:
+      statefulSet: true
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: StatefulSet
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should point KEDA at the workload that exists
+    set:
+      keda.enabled: true
+      keda.triggers:
+        - type: cron
+          metadata:
+            timezone: UTC
+            start: 0 6 * * *
+            end: 0 20 * * *
+            desiredReplicas: "4"
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: ScaledObject
+
+  - it: should have the disruption budget select the same pods as the workload
+    set:
+      podDisruptionBudget.enabled: true
+      selectorLabels:
+        app: app-blue
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: app-blue
+        documentSelector:
+          path: kind
+          value: PodDisruptionBudget
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: app-blue
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep every resource name aligned under fullnameOverride
+    set:
+      fullnameOverride: custom-name
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+      podDisruptionBudget.enabled: true
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      service.ports:
+        - port: 80
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-name
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: metadata.name
+          value: custom-name
+        documentSelector:
+          path: kind
+          value: Service
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: custom-name
+        documentSelector:
+          path: kind
+          value: HorizontalPodAutoscaler
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: custom-name
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should have the statefulset governing service match its serviceName
+    set:
+      statefulSet: true
+      service.ports:
+        - port: 80
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: my-release
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Service

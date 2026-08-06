@@ -1,0 +1,240 @@
+suite: configmaps and secrets
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should name a configmap exactly as given without a release prefix
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: value
+    asserts:
+      - equal:
+          path: metadata.name
+          value: app-config
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should quote configmap values
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            STRING: hello
+            NUMERIC: 8080
+            BOOLISH: true
+    asserts:
+      - equal:
+          path: data.STRING
+          value: "hello"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: data.NUMERIC
+          value: "8080"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: data.BOOLISH
+          value: "true"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should render an empty string for a null configmap value
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            EMPTY: null
+    asserts:
+      - equal:
+          path: data.EMPTY
+          value: ""
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should expand templates inside valuesMultiLine
+    set:
+      configmaps:
+        - name: app-config
+          valuesMultiLine:
+            settings.json: |-
+              {"release": "{{ .Release.Name }}"}
+    asserts:
+      - equal:
+          path: data["settings.json"]
+          value: |-
+            {"release": "my-release"}
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should apply annotations to a configmap
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: value
+          annotations:
+            owner: platform
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            owner: platform
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should render one configmap per listed namespace
+    set:
+      configmaps:
+        - name: app-config
+          namespaces:
+            - team-a
+            - team-b
+          values:
+            KEY: value
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: metadata.namespace
+          value: team-a
+        documentSelector:
+          path: metadata.namespace
+          value: team-a
+      - equal:
+          path: metadata.namespace
+          value: team-b
+        documentSelector:
+          path: metadata.namespace
+          value: team-b
+
+  - it: should fan a configmap out over defaultNamespaces
+    set:
+      defaultNamespaces:
+        - team-a
+        - team-b
+      configmaps:
+        - name: app-config
+          defaultNamespaces: true
+          values:
+            KEY: value
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: should base64 encode decoded secret values
+    set:
+      secrets:
+        decoded:
+          - name: app-secret
+            values:
+              API_KEY: super-secret
+    asserts:
+      - equal:
+          path: metadata.name
+          value: app-secret
+        documentSelector:
+          path: kind
+          value: Secret
+      - equal:
+          path: data.API_KEY
+          value: super-secret
+          decodeBase64: true
+        documentSelector:
+          path: kind
+          value: Secret
+      - equal:
+          path: type
+          value: Opaque
+        documentSelector:
+          path: kind
+          value: Secret
+
+  - it: should pass encoded secret values through untouched
+    set:
+      secrets:
+        encoded:
+          - name: app-secret
+            values:
+              API_KEY: c3VwZXItc2VjcmV0
+    asserts:
+      - equal:
+          path: data.API_KEY
+          value: c3VwZXItc2VjcmV0
+        documentSelector:
+          path: kind
+          value: Secret
+
+  - it: should support a custom secret type
+    set:
+      secrets:
+        decoded:
+          - name: app-tls
+            type: kubernetes.io/tls
+            values:
+              tls.crt: cert
+              tls.key: key
+    asserts:
+      - equal:
+          path: type
+          value: kubernetes.io/tls
+        documentSelector:
+          path: kind
+          value: Secret
+
+  - it: should render one secret per listed namespace
+    set:
+      secrets:
+        decoded:
+          - name: app-secret
+            namespaces:
+              - team-a
+              - team-b
+            values:
+              API_KEY: super-secret
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: should label configmaps and secrets with the common labels
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            KEY: value
+      secrets:
+        decoded:
+          - name: app-secret
+            values:
+              API_KEY: super-secret
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: my-release
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: Secret

@@ -22,13 +22,11 @@ spec:
   {{- if and (not $root.Values.autoscaling.enabled) (not $root.Values.keda.enabled) }}
   replicas: {{ $root.Values.replicas }}
   {{- end }}
-  revisionHistoryLimit: 10
+  revisionHistoryLimit: {{ $root.Values.revisionHistoryLimit | default 10 }}
   selector:
     matchLabels:
-      {{- include "base.selectorLabels" $root | trim | nindent 8 }}
-  {{- if $root.Values.serviceName }}
-  serviceName: {{ $root.Values.serviceName }}
-  {{- end }}
+      {{- include "base.selectorLabels" $root | trim | nindent 6 }}
+  serviceName: {{ $root.Values.serviceName | default (include "base.fullname" $root) }}
   {{- with $root.Values.strategy }}
   updateStrategy:
     {{- toYaml . | nindent 4 }}
@@ -59,7 +57,7 @@ spec:
       initContainers:
         {{- range $containerName, $containerValues := $root.Values.initContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
           {{- with $containerValues.ports }}
           ports:
             {{- toYaml . | trim | nindent 12 }}
@@ -81,7 +79,7 @@ spec:
           {{- end }}
         {{- range $containerName, $containerValues := $root.Values.extraContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
           {{- with $containerValues.ports }}
           ports:
             {{- toYaml . | trim | nindent 12 }}

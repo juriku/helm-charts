@@ -1,0 +1,192 @@
+suite: argo rollouts
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render a Deployment when rollouts are disabled
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should replace the Deployment with a Rollout in Deployment mode
+    set:
+      argo.rollouts.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Rollout
+        documentSelector:
+          path: kind
+          value: Rollout
+      - isAPIVersion:
+          of: argoproj.io/v1alpha1
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should carry the pod template into the Rollout
+    set:
+      argo.rollouts.enabled: true
+      ports:
+        - containerPort: 8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should apply a canary strategy
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.strategy:
+        canary:
+          steps:
+            - setWeight: 20
+            - pause:
+                duration: 10s
+    asserts:
+      - equal:
+          path: spec.strategy.canary.steps[0].setWeight
+          value: 20
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should apply a blueGreen strategy
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.strategy:
+        blueGreen:
+          activeService: my-release
+          previewService: my-release-preview
+    asserts:
+      - equal:
+          path: spec.strategy.blueGreen.previewService
+          value: my-release-preview
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should render both a scaled-down Deployment and a Rollout in workloadRef mode
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.type: workloadRef
+      replicas: 3
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.replicas
+          value: 0
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.replicas
+          value: 3
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should point the workloadRef at the Deployment it manages
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.type: workloadRef
+    asserts:
+      - equal:
+          path: spec.workloadRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: my-release
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should take Rollout replicas from the autoscaler minimum in workloadRef mode
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.type: workloadRef
+      autoscaling.enabled: true
+      autoscaling.minReplicas: 4
+      autoscaling.maxReplicas: 10
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should take Rollout replicas from the KEDA minimum in workloadRef mode
+    set:
+      argo.rollouts.enabled: true
+      argo.rollouts.type: workloadRef
+      keda.enabled: true
+      keda.minReplicaCount: 6
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 6
+        documentSelector:
+          path: kind
+          value: Rollout
+
+  - it: should render an AnalysisTemplate when analysis is enabled
+    set:
+      argo.analysis.enabled: true
+      argo.analysis.metrics:
+        - name: e2e-test
+          failureLimit: 0
+          count: 1
+          provider:
+            job:
+              spec:
+                template:
+                  spec:
+                    restartPolicy: Never
+                    containers:
+                      - name: check
+                        image: alpine:3.20
+                        command: [sh, -c, "true"]
+    asserts:
+      - isKind:
+          of: AnalysisTemplate
+        documentSelector:
+          path: kind
+          value: AnalysisTemplate
+      - equal:
+          path: spec.metrics[0].name
+          value: e2e-test
+        documentSelector:
+          path: kind
+          value: AnalysisTemplate
+
+  - it: should use an explicit analysis name when given
+    set:
+      argo.analysis.enabled: true
+      argo.analysis.name: smoke
+      argo.analysis.metrics:
+        - name: e2e-test
+          failureLimit: 0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: smoke
+        documentSelector:
+          path: kind
+          value: AnalysisTemplate

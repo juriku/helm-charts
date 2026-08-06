@@ -1,0 +1,115 @@
+suite: raw resources
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render no raw resources by default
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should render a raw resource verbatim
+    set:
+      rawYamlList:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: limits
+          spec:
+            limits:
+              - type: Container
+                default:
+                  cpu: 100m
+    asserts:
+      - isKind:
+          of: LimitRange
+        documentSelector:
+          path: kind
+          value: LimitRange
+      - equal:
+          path: spec.limits[0].default.cpu
+          value: 100m
+        documentSelector:
+          path: kind
+          value: LimitRange
+
+  - it: should add the common labels to a raw resource
+    set:
+      rawYamlList:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: limits
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: my-release
+        documentSelector:
+          path: kind
+          value: LimitRange
+
+  - it: should keep labels declared on the raw resource itself
+    set:
+      rawYamlList:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: limits
+            labels:
+              tier: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            tier: platform
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: LimitRange
+
+  - it: should render several raw resources
+    set:
+      rawYamlList:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: limits
+        - apiVersion: v1
+          kind: ResourceQuota
+          metadata:
+            name: quota
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: should expand template expressions in a raw template
+    set:
+      rawTemplateList:
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: {{ .Release.Name }}-raw
+          data:
+            release: {{ .Release.Name }}
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-raw
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: data.release
+          value: my-release
+        documentSelector:
+          path: kind
+          value: ConfigMap

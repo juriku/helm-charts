@@ -59,7 +59,7 @@ spec:
     service:
       name: {{ $ingressValues.backend.serviceName }}
       port:
-        {{- if regexMatch "[0-9]" ( $ingressValues.backend.servicePort | toString ) }}
+        {{- if regexMatch "^[0-9]+$" ( $ingressValues.backend.servicePort | toString ) }}
         number: {{ $ingressValues.backend.servicePort | default 80 }}
         {{- else }}
         name: {{ $ingressValues.backend.servicePort }}
@@ -115,7 +115,7 @@ spec:
                 {{- end }}
                 port:
                   {{- if $hostValues.servicePort }}
-                  {{- if regexMatch "[0-9]" ( $hostValues.servicePort | toString ) }}
+                  {{- if regexMatch "^[0-9]+$" ( $hostValues.servicePort | toString ) }}
                   number: {{ $hostValues.servicePort }}
                   {{- else }}
                   name: {{ $hostValues.servicePort }}

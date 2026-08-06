@@ -1,0 +1,132 @@
+suite: value types and quoting
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should keep a leading-zero string intact in env
+    set:
+      environment.variables.FILE_MODE: "0755"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FILE_MODE
+            value: "0755"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep an exponent-like string intact in env
+    set:
+      environment.variables.THRESHOLD: "1e5"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: THRESHOLD
+            value: "1e5"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render a boolean-like value as a string in env
+    set:
+      environment.variables.DEBUG: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DEBUG
+            value: "true"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render an integer as a string in env
+    set:
+      environment.variables.PORT: 8080
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PORT
+            value: "8080"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should not turn a large integer into scientific notation in env
+    set:
+      environment.variables.MAX_BYTES: 10000000000
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MAX_BYTES
+            value: "10000000000"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render an empty string for a null env value
+    set:
+      environment.variables.EMPTY: null
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMPTY
+            value: ""
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should keep numeric-looking configmap values as strings
+    set:
+      configmaps:
+        - name: app-config
+          values:
+            FILE_MODE: "0755"
+            THRESHOLD: "1e5"
+            MAX_BYTES: 10000000000
+    asserts:
+      - equal:
+          path: data.FILE_MODE
+          value: "0755"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: data.THRESHOLD
+          value: "1e5"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: data.MAX_BYTES
+          value: "10000000000"
+        documentSelector:
+          path: kind
+          value: ConfigMap
+
+  - it: should base64 encode a numeric-looking secret value without mangling it
+    set:
+      secrets:
+        decoded:
+          - name: app-secret
+            values:
+              PIN: "007"
+    asserts:
+      - equal:
+          path: data.PIN
+          value: "007"
+          decodeBase64: true
+        documentSelector:
+          path: kind
+          value: Secret

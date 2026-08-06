@@ -3,7 +3,7 @@ name: job
 description: A Helm chart for Kubernetes job
 type: application
 
-version: 0.17.3
+version: 0.18.0
 
 keywords:
   - job
@@ -16,3 +16,6 @@ dependencies:
   - name: base
     version: ~0
     repository: file://../base
+
+annotations:
+  org.opencontainers.image.source: https://github.com/juriku/helm-charts

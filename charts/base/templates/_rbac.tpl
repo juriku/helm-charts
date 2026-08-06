@@ -183,6 +183,8 @@ roleRef:
 {{- else if $coreRange.RoleName }}
   kind: Role
   name: {{ $coreRange.RoleName }}
+{{- else }}
+{{- fail (printf "RoleBinding %s needs either RoleName or ClusterRoleName" $coreRange.name) }}
 {{- end }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}

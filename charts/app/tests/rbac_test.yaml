@@ -1,0 +1,255 @@
+suite: rbac
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render no rbac resources by default
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should render a ClusterRole with its rules
+    set:
+      ClusterRole:
+        - name: reader
+          rules:
+            - apiGroups: [""]
+              resources: [pods]
+              verbs: [get, list]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: reader
+        documentSelector:
+          path: kind
+          value: ClusterRole
+      - equal:
+          path: rules[0].verbs
+          value: [get, list]
+        documentSelector:
+          path: kind
+          value: ClusterRole
+
+  - it: should render a namespaced Role
+    set:
+      Role:
+        - name: ns-reader
+          namespace: team-a
+          rules:
+            - apiGroups: [""]
+              resources: [configmaps]
+              verbs: [get]
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: team-a
+        documentSelector:
+          path: kind
+          value: Role
+      - equal:
+          path: rules[0].resources
+          value: [configmaps]
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: should expand a user list into User subjects
+    set:
+      RbacUserLists:
+        devops:
+          - alice@example.com
+          - bob@example.com
+      ClusterRoleBinding:
+        - name: devops-edit
+          ClusterRoleName: edit
+          UserLists:
+            - devops
+    asserts:
+      - lengthEqual:
+          path: subjects
+          count: 2
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+      - contains:
+          path: subjects
+          content:
+            kind: User
+            name: alice@example.com
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should expand a group list into Group subjects
+    set:
+      RbacGroupLists:
+        platform:
+          - platform-team
+      ClusterRoleBinding:
+        - name: platform-view
+          ClusterRoleName: view
+          GroupLists:
+            - platform
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: Group
+            name: platform-team
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should render kubeGroups directly as Group subjects
+    set:
+      ClusterRoleBinding:
+        - name: authenticated-view
+          ClusterRoleName: view
+          kubeGroups:
+            - system:authenticated
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: Group
+            name: system:authenticated
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should expand a service account group into ServiceAccount subjects
+    set:
+      serviceAccountGroups:
+        builders:
+          - name: builder
+            namespace: ci
+      ClusterRoleBinding:
+        - name: builders-edit
+          ClusterRoleName: edit
+          serviceAccountGroups:
+            - builders
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: builder
+            namespace: ci
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should pass explicit subjects through
+    set:
+      ClusterRoleBinding:
+        - name: explicit
+          ClusterRoleName: edit
+          subjects:
+            - kind: ServiceAccount
+              name: runner
+              namespace: ci
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: runner
+            namespace: ci
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should reference a ClusterRole from a ClusterRoleBinding
+    set:
+      ClusterRoleBinding:
+        - name: devops-edit
+          ClusterRoleName: edit
+          kubeGroups: [system:authenticated]
+    asserts:
+      - equal:
+          path: roleRef
+          value:
+            kind: ClusterRole
+            name: edit
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+
+  - it: should reference a Role from a RoleBinding
+    set:
+      RoleBinding:
+        - name: ns-edit
+          namespace: team-a
+          RoleName: ns-reader
+          kubeGroups: [system:authenticated]
+    asserts:
+      - equal:
+          path: roleRef
+          value:
+            kind: Role
+            name: ns-reader
+            apiGroup: rbac.authorization.k8s.io
+        documentSelector:
+          path: kind
+          value: RoleBinding
+
+  - it: should fail rather than emit a roleRef without kind and name
+    set:
+      RoleBinding:
+        - name: broken
+          namespace: team-a
+          kubeGroups: [system:authenticated]
+    asserts:
+      - failedTemplate:
+          errorMessage: "RoleBinding broken needs either RoleName or ClusterRoleName"
+
+  - it: should render one RoleBinding per listed namespace
+    set:
+      RoleBinding:
+        - name: ns-edit
+          namespaces:
+            - team-a
+            - team-b
+          RoleName: ns-reader
+          kubeGroups: [system:authenticated]
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: should render a ServiceAccount with labels and annotations
+    set:
+      ServiceAccount:
+        - name: app-sa
+          namespace: team-a
+          annotations:
+            iam.gke.io/gcp-service-account: app@project.iam.gserviceaccount.com
+    asserts:
+      - equal:
+          path: metadata.name
+          value: app-sa
+        documentSelector:
+          path: kind
+          value: ServiceAccount
+      - equal:
+          path: metadata.annotations["iam.gke.io/gcp-service-account"]
+          value: app@project.iam.gserviceaccount.com
+        documentSelector:
+          path: kind
+          value: ServiceAccount
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: ServiceAccount

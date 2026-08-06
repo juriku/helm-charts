@@ -1,0 +1,103 @@
+suite: naming and kind selection
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should name the workload after the release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should name the container after the release by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should use nameOverride for the container name only, not the workload
+    set:
+      nameOverride: custom-container
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: custom-container
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should use fullnameOverride for the workload name
+    set:
+      fullnameOverride: custom-workload
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-workload
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render a StatefulSet instead of a Deployment when statefulSet is true
+    set:
+      statefulSet: true
+      serviceName: my-release-headless
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: kind
+        documentSelector:
+          path: kind
+          value: Deployment
+          skipEmptyTemplates: true
+
+  - it: should honour an explicit kind override
+    set:
+      kind: DaemonSet
+    asserts:
+      - isKind:
+          of: DaemonSet
+        documentSelector:
+          path: kind
+          value: DaemonSet
+
+  - it: should not emit a namespace when none is configured
+    asserts:
+      - notExists:
+          path: metadata.namespace
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should emit metadata.namespace when namespace is set
+    set:
+      namespace: explicit-ns
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: explicit-ns
+        documentSelector:
+          path: kind
+          value: Deployment

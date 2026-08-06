@@ -1,0 +1,283 @@
+suite: ingress
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+
+tests:
+  - it: should not render an ingress by default
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should render an ingress named after the release
+    set:
+      ingress.enabled: true
+      ingress.class: nginx
+      ingress.hosts:
+        - host: app.example.com
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should default the path to / with pathType Prefix
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: app.example.com
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should point the backend at the service and its first port
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 80
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render several paths for one host
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+          paths:
+            - path: /api
+            - path: /admin
+              pathType: Exact
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].http.paths
+          count: 2
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /api
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[1].pathType
+          value: Exact
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should override the backend service name and numeric port per host
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+          serviceName: other-svc
+          servicePort: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: other-svc
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should use a named backend port when the name has no digits
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+          servicePort: http
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.name
+          value: http
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should treat a port name containing a digit as a name
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+          servicePort: http2
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.name
+          value: http2
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render a service defaultBackend
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      ingress.backend:
+        serviceName: default-http-backend
+        servicePort: 8080
+    asserts:
+      - equal:
+          path: spec.defaultBackend.service.name
+          value: default-http-backend
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.defaultBackend.service.port.number
+          value: 8080
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should render a resource defaultBackend
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      ingress.backend:
+        resource:
+          apiGroup: k8s.example.com
+          kind: StorageBucket
+          name: icon-assets
+    asserts:
+      - equal:
+          path: spec.defaultBackend.resource.kind
+          value: StorageBucket
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should derive tls hosts from the rules and use the default secret
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+        - host: www.example.com
+      tls:
+        default: wildcard-tls
+    asserts:
+      - equal:
+          path: spec.tls[0].hosts
+          value:
+            - app.example.com
+            - www.example.com
+        documentSelector:
+          path: kind
+          value: Ingress
+      - equal:
+          path: spec.tls[0].secretName
+          value: wildcard-tls
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should use an explicit tls block when given
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      ingress.tls:
+        - secretName: app-tls
+          hosts:
+            - app.example.com
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: app-tls
+        documentSelector:
+          path: kind
+          value: Ingress
+
+  - it: should suffix additional ingresses from ingressList
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: app.example.com
+      ingressList:
+        - hosts:
+            - host: internal.example.com
+    asserts:
+      - hasDocuments:
+          count: 4
+      - equal:
+          path: spec.rules[0].host
+          value: internal.example.com
+        documentSelector:
+          path: metadata.name
+          value: my-release-2
+
+  - it: should honour an explicit name, class and annotations on an ingressList entry
+    set:
+      ingressList:
+        - name: app-internal
+          class: internal-nginx
+          annotations:
+            nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8
+          hosts:
+            - host: internal.example.com
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: internal-nginx
+        documentSelector:
+          path: metadata.name
+          value: app-internal
+      - isSubset:
+          path: metadata.annotations
+          content:
+            nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8
+        documentSelector:
+          path: metadata.name
+          value: app-internal

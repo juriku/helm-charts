@@ -1,0 +1,156 @@
+suite: labels and selectors
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+chart:
+  version: 9.9.9
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should apply the standard Helm labels to the workload
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            helm.sh/chart: app-9.9.9
+            app.kubernetes.io/instance: my-release
+            app.kubernetes.io/managed-by: Helm
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should derive app.kubernetes.io/name from the release, not the chart name
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should fall back to the image tag for the version label when appVersion is unset
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/version"]
+          value: "1.2.3"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should prefer chart appVersion over the image tag for the version label
+    chart:
+      appVersion: 9.9.9
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/version"]
+          value: "9.9.9"
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should default the selector to app=<fullname>
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should use custom selectorLabels when provided
+    set:
+      selectorLabels:
+        app: app-blue
+        role: api
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: app-blue
+            role: api
+        documentSelector:
+          path: kind
+          value: Deployment
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: app-blue
+            role: api
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should replace all standard labels when labels is set
+    set:
+      labels:
+        owner: platform
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: my-release
+            owner: platform
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: metadata.labels["helm.sh/chart"]
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should add labelsDeployment to the workload metadata only
+    set:
+      labelsDeployment:
+        tier: backend
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            tier: backend
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: spec.template.metadata.labels.tier
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should add podLabels to the pod template only
+    set:
+      podLabels:
+        tier: backend
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            tier: backend
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: metadata.labels.tier
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should label the service with the same common labels
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Service

@@ -1,24 +1,24 @@
 # Helm Charts
 
-Collection of charts that can be used for any type of deployemnt
+Collection of charts that can be used for any type of deployment
 
 
 ## Base Chart
 
 `./charts/base`
 
-This chart used as a collection of tempaltes and functions
+This chart used as a collection of templates and functions
 
 ## other charts
 
-All other charts include `base` chart as dependancy
+All other charts include `base` chart as dependency
 ```
 dependencies:
   - name: base
     repository: file://../base
 ```
 
-Needed templates are beeing loaded with:
+Needed templates are being loaded with:
 ```
 {{ include "base.configmaps" . }}
 {{ include "base.secrets" . }}

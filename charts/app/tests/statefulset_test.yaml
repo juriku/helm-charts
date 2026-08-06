@@ -1,0 +1,196 @@
+suite: statefulset
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  statefulSet: true
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render a StatefulSet and no Deployment
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StatefulSet
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should always set serviceName, which the API requires
+    asserts:
+      - exists:
+          path: spec.serviceName
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should use an explicit serviceName when given
+    set:
+      serviceName: my-release-headless
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: my-release-headless
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should honour revisionHistoryLimit
+    set:
+      revisionHistoryLimit: 3
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 3
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should set replicas from values
+    set:
+      replicas: 4
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should omit replicas when an autoscaler owns scaling
+    set:
+      replicas: 4
+      autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should select pods matching the pod template labels
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should render volumeClaimTemplates with a retention policy
+    set:
+      volumeClaimTemplates:
+        - metadata:
+            name: data
+          spec:
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests:
+                storage: 1Gi
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - equal:
+          path: spec.persistentVolumeClaimRetentionPolicy
+          value:
+            whenDeleted: Retain
+            whenScaled: Retain
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should honour an explicit retention policy
+    set:
+      persistentVolumeClaimRetentionPolicy.whenDeleted: Delete
+      persistentVolumeClaimRetentionPolicy.whenScaled: Delete
+      volumeClaimTemplates:
+        - metadata:
+            name: data
+          spec:
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests:
+                storage: 1Gi
+    asserts:
+      - equal:
+          path: spec.persistentVolumeClaimRetentionPolicy.whenDeleted
+          value: Delete
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should apply the container spec the same way as a Deployment
+    set:
+      ports:
+        - containerPort: 8080
+          name: http
+      environment:
+        variables:
+          NODE_ENV: production
+      resources:
+        requests:
+          cpu: 100m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NODE_ENV
+            value: production
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should inherit the main image for an init container that omits image
+    set:
+      initContainers:
+        migrate:
+          command: ["migrate"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: should apply an update strategy
+    set:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          partition: 1
+    asserts:
+      - equal:
+          path: spec.updateStrategy.rollingUpdate.partition
+          value: 1
+        documentSelector:
+          path: kind
+          value: StatefulSet

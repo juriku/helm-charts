@@ -93,6 +93,18 @@ service port default
 {{- end }}
 
 {{/*
+Render a value as a string. YAML parses numbers as float64, so toString alone
+turns large integers into scientific notation.
+*/}}
+{{- define "base.valueString" -}}
+{{- if and (kindIs "float64" .) (eq . (floor .)) -}}
+{{- printf "%d" (int64 .) -}}
+{{- else -}}
+{{- . | toString -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 range values pairs
 */}}
 {{- define "base.valuesPairs" -}}

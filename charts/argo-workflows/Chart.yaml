@@ -3,7 +3,7 @@ name: argo-workflows
 description: A Helm chart for Kubernetes argocd workflows
 type: application
 
-version: 0.17.3
+version: 0.18.0
 
 keywords:
   - argocd
@@ -17,3 +17,6 @@ dependencies:
   - name: base
     version: ~0
     repository: file://../base
+
+annotations:
+  org.opencontainers.image.source: https://github.com/juriku/helm-charts

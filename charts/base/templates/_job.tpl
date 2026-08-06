@@ -55,7 +55,7 @@ spec:
       initContainers:
         {{- range $containerName, $containerValues := $root.Values.initContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}
@@ -64,7 +64,7 @@ spec:
       containers:
         {{- range $containerName, $containerValues := $root.Values.extraContainers }}
         - name: {{ $containerName }}
-          {{- include "base.image" (merge dict $containerValues.image $root.Values.image) | nindent 10 }}
+          {{- include "base.image" (merge dict ($containerValues.image | default dict) $root.Values.image) | nindent 10 }}
           {{- with include "base.containerDefaultProperties" $containerValues }}
           {{- . | trim | nindent 10 }}
           {{- end }}

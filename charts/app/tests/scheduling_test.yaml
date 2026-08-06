@@ -1,0 +1,256 @@
+suite: pod scheduling
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.enabled: false
+
+tests:
+  - it: should render no scheduling constraints by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should apply nodeSelector and tolerations
+    set:
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: backend
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: dedicated
+            operator: Equal
+            value: backend
+            effect: NoSchedule
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should pass raw affinity through untouched
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values: [eu-west-1a]
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: topology.kubernetes.io/zone
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render soft pod anti-affinity by default weighting
+    set:
+      podAntiAffinity.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution
+        documentSelector:
+          path: kind
+          value: Deployment
+      - lengthEqual:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+          count: 2
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should spread soft anti-affinity across hostname and zone
+    set:
+      podAntiAffinity.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 50
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.topologyKey
+          value: kubernetes.io/hostname
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].podAffinityTerm.topologyKey
+          value: topology.kubernetes.io/zone
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render hard pod anti-affinity when type is hard
+    set:
+      podAntiAffinity.enabled: true
+      podAntiAffinity.type: hard
+    asserts:
+      - exists:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notExists:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should match anti-affinity against the workload selector labels
+    set:
+      podAntiAffinity.enabled: true
+      podAntiAffinity.type: hard
+    asserts:
+      - contains:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions
+          content:
+            key: app
+            operator: In
+            values:
+              - my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should reflect custom selectorLabels in anti-affinity
+    set:
+      podAntiAffinity.enabled: true
+      podAntiAffinity.type: hard
+      selectorLabels:
+        role: api
+    asserts:
+      - contains:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions
+          content:
+            key: role
+            operator: In
+            values:
+              - api
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render the default topology spread constraint
+    set:
+      topologySpreadConstraintsDefault.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: ScheduleAnyway
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].labelSelector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render explicit topology spread constraints
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 2
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: my-release
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should combine explicit and default topology spread constraints
+    set:
+      topologySpreadConstraintsDefault.enabled: true
+      topologySpreadConstraints:
+        - maxSkew: 2
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 2
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should apply priority class, priority and preemption policy
+    set:
+      priorityClassName: high
+      priority: 100
+      preemptionPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.priority
+          value: 100
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.preemptionPolicy
+          value: Never
+        documentSelector:
+          path: kind
+          value: Deployment

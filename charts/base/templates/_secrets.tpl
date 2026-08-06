@@ -24,7 +24,7 @@ metadata:
 data:
 {{- range $key, $value := $secretValues.values }}
   {{- if eq $encodeMode "decoded" }}
-  {{ $key -}}: {{ $value | toString | b64enc | quote -}}
+  {{ $key -}}: {{ include "base.valueString" $value | b64enc | quote -}}
   {{- else if eq $encodeMode "encoded" }}
   {{ $key -}}: {{ $value | quote -}}
   {{- end }}

@@ -2,7 +2,7 @@ apiVersion: v2
 name: default-base
 description: A Helm chart for Kubernetes - default-base for namespaces
 
-version: 0.17.3
+version: 0.18.0
 
 keywords:
   - BackendConfig
@@ -22,3 +22,6 @@ dependencies:
   - name: base
     version: ~0
     repository: file://../base
+
+annotations:
+  org.opencontainers.image.source: https://github.com/juriku/helm-charts

@@ -1,0 +1,413 @@
+suite: container spec
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+
+tests:
+  - it: should build the image reference from repository and tag
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should infer IfNotPresent for a tag containing a digit
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should infer Always for a tag with no digit
+    set:
+      image.tag: main
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should honour an explicit pull policy over the heuristic
+    set:
+      image.tag: main
+      image.pullPolicy: IfNotPresent
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render container ports
+    set:
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8080
+            name: http
+            protocol: TCP
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render command and args
+    set:
+      command: ["sh", "-c"]
+      args: ["sleep 60"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["sleep 60"]
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render plain environment variables in alphabetical order
+    set:
+      environment:
+        variables:
+          ZULU: last
+          ALPHA: first
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: ALPHA
+            value: first
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: ZULU
+            value: last
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render secret, configmap and downward API environment variables
+    set:
+      environment:
+        secretVariables:
+          API_KEY:
+            name: app-secret
+            key: API_KEY
+        configmapVariables:
+          FLAGS:
+            name: app-config
+            key: FLAGS
+        metadata:
+          POD_NAME: metadata.name
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: API_KEY
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FLAGS
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: FLAGS
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render envFrom for configmaps and secrets
+    set:
+      environment:
+        envFromConfigMaps:
+          - shared-config
+        envFromSecrets:
+          - shared-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: shared-config
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: shared-secret
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should emit a null env key when only envFrom is used
+    set:
+      environment:
+        envFromConfigMaps:
+          - shared-config
+    asserts:
+      - isNullOrEmpty:
+          path: spec.template.spec.containers[0].env
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render all three probes
+    set:
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: http
+      startupProbe:
+        httpGet:
+          path: /startup
+          port: http
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /startup
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render resources, lifecycle and container securityContext
+    set:
+      resources:
+        requests:
+          cpu: 100m
+      lifecycle:
+        preStop:
+          exec:
+            command: ["sleep", "5"]
+      securityContext:
+        readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["sleep", "5"]
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should render volumes and volumeMounts
+    set:
+      volumes:
+        - name: config
+          configMap:
+            name: app-config
+      volumeMounts:
+        - name: config
+          mountPath: /etc/app
+          readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: app-config
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /etc/app
+            readOnly: true
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should order init containers alphabetically regardless of declaration order
+    set:
+      initContainers:
+        zeta-wait:
+          image:
+            tag: "1.0.0"
+          command: ["sh", "-c", "sleep 1"]
+        alpha-migrate:
+          image:
+            tag: "1.0.0"
+          command: ["sh", "-c", "migrate"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: alpha-migrate
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: zeta-wait
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should inherit the main image for an init container that omits image
+    set:
+      initContainers:
+        migrate:
+          command: ["migrate"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should inherit the main image for an extra container that omits image
+    set:
+      extraContainers:
+        sidecar:
+          command: ["sidecar"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: example.com/app:1.2.3
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should let an extra container override only the image tag
+    set:
+      extraContainers:
+        sidecar:
+          image:
+            tag: "4.5.6"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: sidecar
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: example.com/app:4.5.6
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should give an extra container its own environment and resources
+    set:
+      extraContainers:
+        sidecar:
+          image:
+            repository: example.com/sidecar
+            tag: "1.0.0"
+          environment:
+            variables:
+              SIDECAR: "true"
+          resources:
+            requests:
+              cpu: 50m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: example.com/sidecar:1.0.0
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: SIDECAR
+            value: "true"
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.containers[1].resources.requests.cpu
+          value: 50m
+        documentSelector:
+          path: kind
+          value: Deployment
+
+  - it: should collect volumes declared on extra containers
+    set:
+      extraContainers:
+        sidecar:
+          image:
+            tag: "1.0.0"
+          volumes:
+            - name: sidecar-tmp
+              emptyDir: {}
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: sidecar-tmp
+            emptyDir: {}
+        documentSelector:
+          path: kind
+          value: Deployment
