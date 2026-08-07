@@ -10,7 +10,7 @@ items:
   - apiVersion: monitoring.coreos.com/v1
     kind: PrometheusRule
     metadata:
-      name: {{ include "base.fullname" $root }}
+      name: {{ printf "%s-%s" (include "base.fullname" $root) $prometheusRuleName }}
       {{- if $prometheusRule.namespace }}
       namespace: {{ $prometheusRule.namespace }}
       {{- else if $root.Values.namespace }}
@@ -18,33 +18,38 @@ items:
       {{- end }}
       labels:
         {{- include "base.labels" $root | trim | nindent 8 }}
-    {{- if $prometheusRule.additionalLabels }}
-{{ toYaml $prometheusRule.additionalLabels | indent 8 }}
-    {{- end }}
+        {{- with $prometheusRule.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       groups:
-{{ toYaml $prometheusRule.groups| indent 8 }}
+        {{- toYaml $prometheusRule.groups | nindent 8 }}
 {{- end }}
 {{- else }}
-{{- range .Values.additionalPrometheusRules }}
+{{- range $index, $prometheusRule := .Values.additionalPrometheusRules }}
   - apiVersion: monitoring.coreos.com/v1
     kind: PrometheusRule
     metadata:
+      {{- if $prometheusRule.name }}
+      name: {{ $prometheusRule.name }}
+      {{- else if eq $index 0 }}
       name: {{ include "base.fullname" $root }}
-      {{- if .namespace }}
-      namespace: {{ .namespace }}
+      {{- else }}
+      name: {{ printf "%s-%s" (include "base.fullname" $root) (toString (add $index 1)) }}
+      {{- end }}
+      {{- if $prometheusRule.namespace }}
+      namespace: {{ $prometheusRule.namespace }}
       {{- else if $root.Values.namespace }}
       namespace: {{ $root.Values.namespace }}
       {{- end }}
       labels:
         {{- include "base.labels" $root | trim | nindent 8 }}
-{{ include "prometheus-operator.labels" $ | indent 8 }}
-    {{- if .additionalLabels }}
-{{ toYaml .additionalLabels | indent 8 }}
-    {{- end }}
+        {{- with $prometheusRule.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       groups:
-{{ toYaml .groups| indent 8 }}
+        {{- toYaml $prometheusRule.groups | nindent 8 }}
 {{- end }}
 {{- end }}
 {{- end }}

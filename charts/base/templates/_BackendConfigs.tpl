@@ -16,7 +16,7 @@ metadata:
     {{- include "base.labels" $root | trim | nindent 4 }}
 spec:
 {{- with .spec }}
-{{ toYaml . | indent 2 }}
+{{- toYaml . | nindent 2 }}
 {{- end }}
 {{- if .iap }}
   iap:
@@ -67,7 +67,7 @@ metadata:
     {{- include "base.labels" $root | trim | nindent 4 }}
 spec:
 {{- with .spec }}
-{{ toYaml . | indent 2 }}
+{{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
 {{- end }}

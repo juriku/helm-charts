@@ -1,0 +1,195 @@
+suite: job
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/job
+  image.tag: "1.2.3"
+
+tests:
+  - it: should render a Job named after the release
+    asserts:
+      - isKind:
+          of: Job
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Job
+      - isAPIVersion:
+          of: batch/v1
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should label the pods it creates so they can be found
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app.kubernetes.io/instance: my-release
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should default backoffLimit and restartPolicy for a run-once job
+    asserts:
+      - equal:
+          path: spec.backoffLimit
+          value: 1
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should apply completions, parallelism and deadlines
+    set:
+      completions: 5
+      parallelism: 2
+      activeDeadlineSeconds: 600
+      podActiveDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 3600
+    asserts:
+      - equal:
+          path: spec.completions
+          value: 5
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.parallelism
+          value: 2
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.activeDeadlineSeconds
+          value: 600
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 3600
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.template.spec.activeDeadlineSeconds
+          value: 300
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should render the main container first
+    set:
+      extraContainers:
+        - name: sidecar
+          image:
+            tag: "1.0.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: sidecar
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should inherit the main image for an init container that omits image
+    set:
+      initContainers:
+        - name: prepare
+          command: ["sh", "-c", "true"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: example.com/job:1.2.3
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should apply command, env and resources to the container
+    set:
+      command: ["sh", "-c"]
+      args: ["migrate"]
+      environment:
+        variables:
+          MODE: batch
+      resources:
+        requests:
+          cpu: 100m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+        documentSelector:
+          path: kind
+          value: Job
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MODE
+            value: batch
+        documentSelector:
+          path: kind
+          value: Job
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should support a pod failure policy
+    set:
+      podFailurePolicy:
+        rules:
+          - action: FailJob
+            onExitCodes:
+              operator: In
+              values: [42]
+    asserts:
+      - equal:
+          path: spec.podFailurePolicy.rules[0].action
+          value: FailJob
+        documentSelector:
+          path: kind
+          value: Job
+
+  - it: should render configmaps and secrets alongside the job
+    set:
+      configmaps:
+        - name: job-config
+          values:
+            KEY: value
+      secrets:
+        decoded:
+          - name: job-secret
+            values:
+              TOKEN: shh
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: data.TOKEN
+          value: shh
+          decodeBase64: true
+        documentSelector:
+          path: kind
+          value: Secret

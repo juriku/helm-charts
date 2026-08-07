@@ -1,0 +1,295 @@
+suite: cert-manager, traefik, istio and aws resources
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+set:
+  image.repository: example.com/app
+  image.tag: "1.2.3"
+  service.ports:
+    - port: 80
+      targetPort: 8080
+
+tests:
+  - it: should render none of them by default
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should request a certificate from a cluster issuer
+    set:
+      certificates:
+        - dnsNames:
+            - app.example.com
+          issuerRef:
+            name: letsencrypt-prod
+    asserts:
+      - isKind:
+          of: Certificate
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: metadata.name
+          value: my-release
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: spec.secretName
+          value: my-release-tls
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: letsencrypt-prod
+            kind: ClusterIssuer
+            group: cert-manager.io
+        documentSelector:
+          path: kind
+          value: Certificate
+
+  - it: should support a namespaced Issuer and explicit secret name
+    set:
+      certificates:
+        - secretName: custom-tls
+          duration: 2160h
+          renewBefore: 360h
+          dnsNames: [app.example.com]
+          issuerRef:
+            name: internal-ca
+            kind: Issuer
+    asserts:
+      - equal:
+          path: spec.secretName
+          value: custom-tls
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: spec.issuerRef.kind
+          value: Issuer
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: spec.duration
+          value: 2160h
+        documentSelector:
+          path: kind
+          value: Certificate
+
+  - it: should route to the chart service by default in a traefik IngressRoute
+    set:
+      traefikIngressRoutes:
+        - routes:
+            - match: Host(`app.example.com`)
+    asserts:
+      - isKind:
+          of: IngressRoute
+        documentSelector:
+          path: kind
+          value: IngressRoute
+      - equal:
+          path: spec.entryPoints
+          value:
+            - websecure
+        documentSelector:
+          path: kind
+          value: IngressRoute
+      - equal:
+          path: spec.routes[0].services[0]
+          value:
+            name: my-release
+            port: 80
+        documentSelector:
+          path: kind
+          value: IngressRoute
+
+  - it: should attach traefik middlewares to a route
+    set:
+      traefikMiddlewares:
+        redirect:
+          redirectScheme:
+            scheme: https
+            permanent: true
+      traefikIngressRoutes:
+        - routes:
+            - match: Host(`app.example.com`)
+              middlewares:
+                - name: my-release-redirect
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-redirect
+        documentSelector:
+          path: kind
+          value: Middleware
+      - equal:
+          path: spec.redirectScheme.scheme
+          value: https
+        documentSelector:
+          path: kind
+          value: Middleware
+      - equal:
+          path: spec.routes[0].middlewares[0].name
+          value: my-release-redirect
+        documentSelector:
+          path: kind
+          value: IngressRoute
+
+  - it: should render an istio VirtualService
+    set:
+      istioVirtualServices:
+        - hosts: [app.example.com]
+          gateways: [istio-system/public]
+          http:
+            - route:
+                - destination:
+                    host: my-release
+                    port:
+                      number: 80
+    asserts:
+      - isKind:
+          of: VirtualService
+        documentSelector:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: my-release
+        documentSelector:
+          path: kind
+          value: VirtualService
+
+  - it: should default the DestinationRule host to the service
+    set:
+      istioDestinationRules:
+        - trafficPolicy:
+            tls:
+              mode: ISTIO_MUTUAL
+    asserts:
+      - equal:
+          path: spec.host
+          value: my-release
+        documentSelector:
+          path: kind
+          value: DestinationRule
+      - equal:
+          path: spec.trafficPolicy.tls.mode
+          value: ISTIO_MUTUAL
+        documentSelector:
+          path: kind
+          value: DestinationRule
+
+  - it: should default mTLS to STRICT and select the workload pods
+    set:
+      istioPeerAuthentication:
+        mode: STRICT
+    asserts:
+      - equal:
+          path: spec.mtls.mode
+          value: STRICT
+        documentSelector:
+          path: kind
+          value: PeerAuthentication
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: PeerAuthentication
+
+  - it: should render an istio Gateway with the default selector
+    set:
+      istioGateways:
+        - servers:
+            - port:
+                number: 443
+                name: https
+                protocol: HTTPS
+              hosts: [app.example.com]
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            istio: ingressgateway
+        documentSelector:
+          path: kind
+          value: Gateway
+      - equal:
+          path: spec.servers[0].port.number
+          value: 443
+        documentSelector:
+          path: kind
+          value: Gateway
+
+  - it: should bind a target group to the chart service
+    set:
+      targetGroupBindings:
+        - targetGroupARN: arn:aws:elasticloadbalancing:eu-west-1:1:targetgroup/x/1
+          targetType: ip
+          serviceRef: {}
+    asserts:
+      - isKind:
+          of: TargetGroupBinding
+        documentSelector:
+          path: kind
+          value: TargetGroupBinding
+      - equal:
+          path: spec.serviceRef
+          value:
+            name: my-release
+            port: 80
+        documentSelector:
+          path: kind
+          value: TargetGroupBinding
+      - equal:
+          path: spec.targetType
+          value: ip
+        documentSelector:
+          path: kind
+          value: TargetGroupBinding
+
+  - it: should attach security groups to the workload pods
+    set:
+      securityGroupPolicies:
+        - securityGroups:
+            - sg-0123456789abcdef0
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app: my-release
+        documentSelector:
+          path: kind
+          value: SecurityGroupPolicy
+      - contains:
+          path: spec.securityGroups.groupIds
+          content: sg-0123456789abcdef0
+        documentSelector:
+          path: kind
+          value: SecurityGroupPolicy
+
+  - it: should render ingress class params
+    set:
+      ingressClassParams:
+        alb:
+          scheme: internet-facing
+          ipAddressType: dualstack
+    asserts:
+      - equal:
+          path: metadata.name
+          value: alb
+        documentSelector:
+          path: kind
+          value: IngressClassParams
+      - equal:
+          path: spec.scheme
+          value: internet-facing
+        documentSelector:
+          path: kind
+          value: IngressClassParams

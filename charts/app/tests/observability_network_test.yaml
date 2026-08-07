@@ -78,6 +78,98 @@ tests:
         documentSelector:
           path: kind
           value: NetworkPolicy
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Ingress
+            - Egress
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+
+  - it: should select every pod in the namespace when podSelector is empty
+    set:
+      networkPolicies:
+        - name: default-deny
+          podSelector: {}
+          policyTypes:
+            - Ingress
+            - Egress
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value: {}
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+
+  - it: should omit policyTypes rather than emit an empty key
+    set:
+      networkPolicies:
+        - name: no-rules
+    asserts:
+      - notExists:
+          path: spec.policyTypes
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+
+  - it: should derive Egress alone for an egress-only policy
+    set:
+      networkPolicies:
+        - egress:
+            - to:
+                - ipBlock:
+                    cidr: 10.0.0.0/8
+              ports:
+                - protocol: TCP
+                  port: 5432
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.egress[0].ports[0].port
+          value: 5432
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+
+  - it: should honour a custom podSelector, namespace and annotations
+    set:
+      networkPolicies:
+        - name: custom
+          namespace: other-ns
+          annotations:
+            owner: platform
+          podSelector:
+            matchLabels:
+              tier: backend
+          ingress:
+            - {}
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels.tier
+          value: backend
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: metadata.namespace
+          value: other-ns
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: metadata.annotations.owner
+          value: platform
+        documentSelector:
+          path: kind
+          value: NetworkPolicy
 
   - it: should suffix additional network policies
     set:

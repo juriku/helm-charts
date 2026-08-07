@@ -49,17 +49,16 @@ spec:
       parallelism: {{ $root.Values.parallelism }}
       {{- end }}
       template:
-        {{- if or $root.Values.podAnnotations $root.Values.podLabels }}
         metadata:
           {{- if $root.Values.podAnnotations }}
           annotations:
             {{- include "base.valuesPairs" $root.Values.podAnnotations | trim | nindent 12 }}
           {{- end }}
-          {{- with $root.Values.podLabels }}
           labels:
+            {{- include "base.labels" $root | trim | nindent 12 }}
+            {{- with $root.Values.podLabels }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
-        {{- end }}
+            {{- end }}
         spec:
           {{- with include "base.podDefaultProperties" $root }}
           {{- . | trim | nindent 10 }}

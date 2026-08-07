@@ -7,4 +7,5 @@
 {{ include "base.pvc" . }}
 {{ include "base.service" . }}
 {{ include "base.ingress" . }}
+{{ include "base.networkPolicy" . }}
 {{ include "base.raw" . }}

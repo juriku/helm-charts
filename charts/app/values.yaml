@@ -14,6 +14,15 @@ image:
   ## default tag, pipeline should add latest tag when pushing to production
   ## tag will be passed automatically through pipeline
   tag: "latest"
+  ## pin by digest instead of tag (wins over tag when both are set)
+  # digest: sha256:<64 hex chars>
+
+## drops all capabilities, blocks privilege escalation, forces non-root and
+## seccomp RuntimeDefault on every container. values below still win.
+# securityPreset: restricted
+
+## roll the pods when a configmap or secret in this release changes
+rollOnConfigChange: true
 
 ## secret name for dockerconfigjson secret
 # imagePullSecrets:
@@ -557,3 +566,113 @@ statefulSet: false
 persistentVolumeClaimRetentionPolicy:
   whenDeleted: Retain
   whenScaled: Retain
+
+# -- cert-manager certificates. secretName defaults to <release>-tls, issuerRef.kind to ClusterIssuer
+certificates: []
+#   - dnsNames:
+#       - app.example.com
+#     issuerRef:
+#       name: letsencrypt-prod
+
+# -- network policies for this release.
+# podSelector defaults to this workload's pods. Use {} to cover the whole namespace.
+# policyTypes follows the rules you write, so a deny-all has to state it.
+networkPolicies: []
+#   ## allow one workload in
+#   - ingress:
+#       - from:
+#           - podSelector:
+#               matchLabels:
+#                 role: frontend
+#   ## deny everything not otherwise allowed, namespace-wide
+#   - name: default-deny
+#     podSelector: {}
+#     policyTypes: [Ingress, Egress]
+#   ## allow egress to a CIDR on one port
+#   - egress:
+#       - to:
+#           - ipBlock:
+#               cidr: 10.0.0.0/8
+#         ports:
+#           - protocol: TCP
+#             port: 5432
+
+# -- prometheus operator service monitors. selector defaults to this workload, endpoint to http:/metrics
+serviceMonitors: []
+#   - port: metrics
+
+# -- external-secrets operator. pulls into a Secret named after the resource
+externalSecrets: []
+#   - name: app-secret
+#     secretStoreRef:
+#       name: aws-store
+#     data:
+#       - secretKey: API_KEY
+#         remoteRef:
+#           key: prod/app/api-key
+
+# -- traefik ingress routes. services default to this chart's service and port
+traefikIngressRoutes: []
+#   - routes:
+#       - match: Host(`app.example.com`)
+#         middlewares:
+#           - name: my-release-redirect
+
+# -- traefik middlewares, named <release>-<key>
+traefikMiddlewares: {}
+#   redirect:
+#     redirectScheme:
+#       scheme: https
+#       permanent: true
+
+# -- aws load balancer controller target group bindings
+targetGroupBindings: []
+#   - targetGroupARN: arn:aws:elasticloadbalancing:eu-west-1:123456789012:targetgroup/app/abc
+#     targetType: ip
+#     serviceRef: {}
+
+# -- eks pod security groups. podSelector defaults to this workload's pods
+securityGroupPolicies: []
+#   - securityGroups:
+#       - sg-0123456789abcdef0
+
+# -- aws load balancer controller ingress class params, keyed by class name
+ingressClassParams: {}
+#   alb:
+#     scheme: internet-facing
+
+# -- istio virtual services
+istioVirtualServices: []
+#   - hosts: [app.example.com]
+#     gateways: [istio-system/public]
+#     http:
+#       - route:
+#           - destination:
+#               host: my-release
+
+# -- istio destination rules. host defaults to this chart's service
+istioDestinationRules: []
+#   - trafficPolicy:
+#       tls:
+#         mode: ISTIO_MUTUAL
+
+# -- istio gateways. selector defaults to istio: ingressgateway
+istioGateways: []
+#   - servers:
+#       - port:
+#           number: 443
+#           name: https
+#           protocol: HTTPS
+#         hosts: [app.example.com]
+
+# -- istio mTLS mode for this workload
+istioPeerAuthentication: {}
+#   mode: STRICT
+
+# -- istio authorization policies. selector defaults to this workload's pods
+istioAuthorizationPolicies: []
+#   - action: ALLOW
+#     rules:
+#       - from:
+#           - source:
+#               principals: [cluster.local/ns/default/sa/frontend]

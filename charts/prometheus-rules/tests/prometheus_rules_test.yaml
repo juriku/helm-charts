@@ -1,0 +1,106 @@
+suite: prometheus rules
+templates:
+  - templates/base.yaml
+release:
+  name: my-release
+
+tests:
+  - it: should render nothing when no rules are configured
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a rule from the map form
+    set:
+      additionalPrometheusRulesMap:
+        latency:
+          groups:
+            - name: latency
+              rules:
+                - alert: HighLatency
+                  expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 1
+                  for: 5m
+    asserts:
+      - equal:
+          path: items[0].kind
+          value: PrometheusRule
+      - equal:
+          path: items[0].spec.groups[0].rules[0].alert
+          value: HighLatency
+
+  - it: should give each rule in the map a distinct name
+    set:
+      additionalPrometheusRulesMap:
+        latency:
+          groups:
+            - name: latency
+              rules:
+                - alert: HighLatency
+                  expr: up == 0
+        errors:
+          groups:
+            - name: errors
+              rules:
+                - alert: HighErrorRate
+                  expr: up == 0
+    asserts:
+      - lengthEqual:
+          path: items
+          count: 2
+      - notEqual:
+          path: items[0].metadata.name
+          value: my-release
+      - notEqual:
+          path: items[1].metadata.name
+          value: my-release
+
+  - it: should apply additional labels to a rule
+    set:
+      additionalPrometheusRulesMap:
+        latency:
+          additionalLabels:
+            release: kube-prometheus-stack
+          groups:
+            - name: latency
+              rules:
+                - alert: HighLatency
+                  expr: up == 0
+    asserts:
+      - equal:
+          path: items[0].metadata.labels.release
+          value: kube-prometheus-stack
+      - isSubset:
+          path: items[0].metadata.labels
+          content:
+            app.kubernetes.io/managed-by: Helm
+
+  - it: should honour a per-rule namespace
+    set:
+      additionalPrometheusRulesMap:
+        latency:
+          namespace: monitoring
+          groups:
+            - name: latency
+              rules:
+                - alert: HighLatency
+                  expr: up == 0
+    asserts:
+      - equal:
+          path: items[0].metadata.namespace
+          value: monitoring
+
+  - it: should render rules from the list form
+    set:
+      additionalPrometheusRules:
+        - groups:
+            - name: latency
+              rules:
+                - alert: HighLatency
+                  expr: up == 0
+    asserts:
+      - equal:
+          path: items[0].kind
+          value: PrometheusRule
+      - equal:
+          path: items[0].spec.groups[0].name
+          value: latency

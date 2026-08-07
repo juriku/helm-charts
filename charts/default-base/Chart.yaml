@@ -1,6 +1,7 @@
 apiVersion: v2
 name: default-base
 description: A Helm chart for Kubernetes - default-base for namespaces
+type: application
 
 version: 0.18.5
 
@@ -16,12 +17,19 @@ keywords:
 
 maintainers:
   - name: juri
-    url: https://github.com/ferodrinks/helm-charts
+    url: https://github.com/juriku/helm-charts
 
 dependencies:
   - name: base
     version: ~0
     repository: file://../base
 
+kubeVersion: ">=1.23.0-0"
+
+home: https://github.com/juriku/helm-charts
+
+sources:
+  - https://github.com/juriku/helm-charts
+
 annotations:
-  org.opencontainers.image.source: https://github.com/ferodrinks/helm-charts
+  org.opencontainers.image.source: https://github.com/juriku/helm-charts

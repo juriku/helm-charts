@@ -24,24 +24,26 @@ metadata:
     {{- toYaml . | trim | nindent 4 }}
   {{- end }}
 spec:
+  {{- if hasKey $policy "podSelector" }}
   podSelector:
-    {{- if $policy.podSelector }}
     {{- toYaml $policy.podSelector | nindent 4 }}
-    {{- else }}
+  {{- else }}
+  podSelector:
     matchLabels:
       {{- include "base.selectorLabels" $root | trim | nindent 6 }}
-    {{- end }}
+  {{- end }}
+  {{- if $policy.policyTypes }}
   policyTypes:
-    {{- if $policy.policyTypes }}
     {{- toYaml $policy.policyTypes | nindent 4 }}
-    {{- else }}
+  {{- else if or $policy.ingress $policy.egress }}
+  policyTypes:
     {{- if $policy.ingress }}
     - Ingress
     {{- end }}
     {{- if $policy.egress }}
     - Egress
     {{- end }}
-    {{- end }}
+  {{- end }}
   {{- with $policy.ingress }}
   ingress:
     {{- toYaml . | nindent 4 }}

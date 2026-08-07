@@ -1,0 +1,44 @@
+statefulSet: true
+replicas: 3
+
+image:
+  repository: nginx
+  tag: "1.27"
+
+ports:
+  - containerPort: 8080
+    name: http
+
+service:
+  enabled: true
+  ports:
+    - port: 80
+      targetPort: 8080
+
+volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+
+persistentVolumeClaimRetentionPolicy:
+  whenDeleted: Retain
+  whenScaled: Retain
+
+initContainers:
+  - name: prepare
+    command: ["sh", "-c", "true"]
+
+extraContainers:
+  - name: sidecar
+    command: ["sh", "-c", "sleep infinity"]
+
+secrets:
+  decoded:
+    - name: app-secret
+      values:
+        API_KEY: not-a-real-key

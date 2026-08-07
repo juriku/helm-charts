@@ -1,0 +1,78 @@
+replicas: 2
+
+image:
+  repository: nginx
+  tag: "1.27"
+
+ports:
+  - containerPort: 8080
+    name: http
+  - containerPort: 9090
+    name: metrics
+
+service:
+  enabled: true
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+
+ingress:
+  enabled: true
+  class: nginx
+  hosts:
+    - host: app.example.com
+      paths:
+        - path: /
+
+securityPreset: restricted
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+
+environment:
+  variables:
+    NODE_ENV: production
+    MAX_BYTES: 10000000000
+
+configmaps:
+  - name: app-config
+    values:
+      FEATURE_FLAGS: "a,b,c"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  cpu:
+    - averageUtilization: 70
+
+podDisruptionBudget:
+  enabled: true
+
+podAntiAffinity:
+  enabled: true
+
+serviceMonitors:
+  - port: metrics
+
+networkPolicies:
+  - ingress:
+      - from:
+          - podSelector:
+              matchLabels:
+                role: frontend
